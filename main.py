@@ -28,7 +28,7 @@ prefs = {"download.default_directory" : download_dir,
          "safebrowsing.enabled": True,
          "safebrowsing.disable_download_protection": True,
          "credentials_enable_service": False,
-         "profile.password_manager_enabled": False
+         "profile.password_manager_enabled": False,
         }
 
 options = webdriver.ChromeOptions()
@@ -44,7 +44,7 @@ options.add_argument('--ignore-ssl-errors')
 options.add_experimental_option("prefs", prefs) 
 options.add_argument('log-level=3')
 
-# options.add_experimental_option("detach", True)
+options.add_experimental_option("detach", True)
 
 if __name__ == "__main__":
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         f.write('')
     
     mergebase_folder = "inputFiles"
-    merge_all(mergebase_folder)
+    # merge_all(mergebase_folder)
     audioFiles = os.listdir(mergebase_folder)
     audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
     logging.info(f"Audio files to be uploaded: {audioFiles}")
@@ -72,18 +72,32 @@ if __name__ == "__main__":
     driver.get("https://web.descript.com/")
 
     loginToDescript(driver)
+    # input("EEEEE")
     driver.get(config['defaultProject'])
     setUpProject(driver)
     createUploadComposition(driver=driver, base_folder=mergebase_folder)
-    # delete_last_composition(driver=driver)
+
     time.sleep(2)
+
+    # Generate all the files
+
     for audioFile in audioFiles:
         retries = 3
+        success = False
         while retries > 0:
             print("")
             createNewComposition(driver)
             useAudioFile(driver, audioFile)
+            # try:
             success = exportComposition(driver, destination="web", audioFilename=audioFile)
+            # except UnexpectedAlertPresentException:
+            #     pyautogui.hotkey("ctrl", "c")  # Copy alert text to clipboard
+            #     pyautogui.press('esc')  # Press Escape to close the alert
+            #     pyautogui.press('esc')
+            #     pyautogui.press('esc')
+            #     # pyperclip.copy(alert.text)  # Copy alert text to clipboard
+            #     save_clipboard_link()
+            #     success = True
             if not success:
                 print("Export failed, retrying...")
                 retries -= 1
@@ -92,12 +106,13 @@ if __name__ == "__main__":
         if retries == 0:
             print("Failed to export after 3 attempts, skipping this file.")
     
+    # Download all the files
     with open('downloadLinks.txt', 'r') as f:
         links = f.readlines()
     
-    for link in links:
+    for i, link in enumerate(links):
         link = link.strip()
         if link:
-            downloadFromDescript(driver, link)
+            downloadFromDescript(driver, link, audioFiles[i])
 
     driver.quit()

@@ -11,7 +11,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import *
 import pyautogui
 import pygetwindow as gw
-import pyperclip
 
 
 from modules.utils import *
@@ -21,23 +20,7 @@ import ctypes
 
 ctypes.windll.user32.AllowSetForegroundWindow(-1)
 
-def save_clipboard_link(file_path="downloadLinks.txt"):
-    # Read clipboard content
-    clipboard_content = pyperclip.paste().strip()
 
-    # Regex to check for a URL
-    url_pattern = re.compile(
-        r'^(https?://|www\.)[^\s/$.?#].[^\s]*$', re.IGNORECASE
-    )
-
-    if url_pattern.match(clipboard_content):
-        with open(file_path, 'a', encoding='utf-8') as f:
-            f.write(clipboard_content + '\n')
-        logging.info(f"Saved link: {clipboard_content} to {file_path}")
-        print(f"Link saved: {clipboard_content}")
-    else:
-        logging.info("Clipboard content is not a valid link.")
-        print("Clipboard content is not a valid link.")
 
 
 # Allow the current process to set the foreground window
@@ -215,6 +198,8 @@ def createUploadComposition(driver:webdriver.Chrome, base_folder:str='inputFiles
         print("Upload timed out.")
         driver.quit()
         exit()
+    
+    clear_clipboard()
 
 def gotoProjectTab(driver:webdriver.Chrome):
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Project')]/parent::button"))).click()
@@ -228,7 +213,7 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     except TimeoutException:
         pass
     searchField = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="search"]')))
-    searchField.send_keys(audioFile)
+    searchField.send_keys(audioFile.split(".")[0])
     time.sleep(1)
     try:
         last_file = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]')))[-1]
@@ -316,14 +301,27 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             print("Web Export completed!")
             webExportComplete = True
         except TimeoutException:
+            webExportComplete = False
             exportSuccess = False
             print("Web export failed or timed out.")
-        
+        time.sleep(2)
         if webExportComplete:
-            copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, 'aria-label="Copy published page link"')))
-            copyLinkButton.click()
-            time.sleep(1)
-            save_clipboard_link()
+            copySuccessul = False
+            while not copySuccessul:
+                copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]')))
+                # location = copyLinkButton.location
+                # size = copyLinkButton.size
+                # panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
+                # center_x = location['x'] + size['width'] // 2
+                # center_y = location['y'] + panel_height + (size['height'] // 2)
+                
+                # pyautogui.moveTo(center_x, center_y)
+                # pyautogui.click()
+                actionChains = ActionChains(driver)
+                actionChains.move_to_element(copyLinkButton).click().perform()
+                time.sleep(2)
+                copySuccessul = save_clipboard_link()
+                clear_clipboard()
     
     elif destination == "local":
         localOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]')))

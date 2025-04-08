@@ -5,9 +5,19 @@ import os
 from pydub import AudioSegment
 import re  # Add this import for sorting by chapter numbers
 
+import pyperclip
+
 import logging  # Add this import for logging
 # Configure logging
 logging.basicConfig(filename='runtime.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def clear_clipboard():
+    """
+    Clears the clipboard.
+    """
+    clipboard.OpenClipboard()
+    clipboard.EmptyClipboard()
+    clipboard.CloseClipboard()
 
 def copy_files_to_clipboard(file_paths):
     # Convert to double-null-terminated string (for multiple files)
@@ -97,6 +107,28 @@ def merge_all(base_folder):
         print(f"Error merging files in subdirectories: {e}")
 
 # Example usage:
+
+def save_clipboard_link(file_path="downloadLinks.txt"):
+    # Read clipboard content
+    clipboard_content = pyperclip.paste().strip()
+
+    # Regex to check for a URL
+    url_pattern = re.compile(
+        r'^(https?://|www\.)[^\s/$.?#].[^\s]*$', re.IGNORECASE
+    )
+
+    if url_pattern.match(clipboard_content):
+        with open(file_path, 'a', encoding='utf-8') as f:
+            f.write(clipboard_content + '\n')
+        logging.info(f"Saved link: {clipboard_content} to {file_path}")
+        print(f"Link saved: {clipboard_content}")
+
+        return True
+    else:
+        logging.info(f"Clipboard content {clipboard_content} is not a valid link.")
+        print("Clipboard content is not a valid link.")
+
+        return False
 
 if __name__ == "__main__":
     try:

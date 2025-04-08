@@ -6,12 +6,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import *
-
+import requests
 
 from modules.utils import *
 from modules.notifier import *
 
-def downloadFromDescript(driver:webdriver.Chrome, link:str):
+def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
     # //div[contains(text(),"Preparing to render")]
     link = link.strip()
     with open('config.json', 'r') as f:
@@ -36,12 +36,25 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str):
                 logging.info("Download button not found or not clickable.")
                 print("Download button not found or not clickable.")
                 return False
-        
         if _ == 2:
             logging.info("Download button not found or not clickable.")
             print("Download button not found or not clickable.")
             return False
-        time.sleep(0.1)
+        time.sleep(5)
+    
+    tabs = driver.window_handles
+    for tab in tabs:
+        driver.switch_to.window(tab)
+        time.sleep(0.5)
+        if "descriptusercontent" in driver.current_url:
+            r = requests.get(driver.current_url)
+            filename = filename.split(".")[0] + driver.current_url.split(".")[-1]
+            path = os.path.join(os.getcwd(), "downloadedAudio", filename)
+            logging.info(f"Downloading file: {filename} to {path}")
+            with open(path, "wb") as f:
+                f.write(r.content)
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
     time.sleep(5)
 
 

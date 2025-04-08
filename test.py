@@ -15,25 +15,32 @@ logging.basicConfig(filename='file.log',level=logging.INFO, format='%(asctime)s 
 # file_path = os.path.join(os.getcwd(), "downloadedAudio", f"{audioFilename.split('.')[0]}.{exportFomat}")
 # logging.info(f"File path: {file_path}")
 
-with open('downloadLinks.txt', 'w') as f: # Clear the file content
-    f.write('')
+mergebase_folder = "inputFiles"
+# merge_all(mergebase_folder)
+audioFiles = os.listdir(mergebase_folder)
+audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
 
-def save_clipboard_link(file_path="downloadLinks.txt"):
-    # Read clipboard content
-    clipboard_content = pyperclip.paste().strip()
+print(f"Audio files to be uploaded: {audioFiles}")
 
-    # Regex to check for a URL
-    url_pattern = re.compile(
-        r'^(https?://|www\.)[^\s/$.?#].[^\s]*$', re.IGNORECASE
-    )
+# with open('downloadLinks.txt', 'w') as f: # Clear the file content
+#     f.write('')
 
-    if url_pattern.match(clipboard_content):
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(clipboard_content + '\n')
-        logging.info(f"Saved link: {clipboard_content} to {file_path}")
-        print(f"Link saved: {clipboard_content}")
-    else:
-        logging.info("Clipboard content is not a valid link.")
-        print("Clipboard content is not a valid link.")
+# def save_clipboard_link(file_path="downloadLinks.txt"):
+#     # Read clipboard content
+#     clipboard_content = pyperclip.paste().strip()
 
-save_clipboard_link()
+#     # Regex to check for a URL
+#     url_pattern = re.compile(
+#         r'^(https?://|www\.)[^\s/$.?#].[^\s]*$', re.IGNORECASE
+#     )
+
+#     if url_pattern.match(clipboard_content):
+#         with open(file_path, 'w', encoding='utf-8') as f:
+#             f.write(clipboard_content + '\n')
+#         logging.info(f"Saved link: {clipboard_content} to {file_path}")
+#         print(f"Link saved: {clipboard_content}")
+#     else:
+#         logging.info("Clipboard content is not a valid link.")
+#         print("Clipboard content is not a valid link.")
+
+# save_clipboard_link()
