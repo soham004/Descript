@@ -10,7 +10,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import *
 import pyautogui
-import pyperclip
 import pygetwindow as gw
 
 from modules.utils import *
