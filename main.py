@@ -82,14 +82,14 @@ if __name__ == "__main__":
             if not success:
                 print("Export failed, retrying...")
                 retries -= 1
-                # time.sleep(5)
                 continue
             success = exportComposition(driver, destination="local", audioFilename=audioFile)
             if not success:
                 print("Export failed, retrying...")
                 retries -= 1
-                # time.sleep(5)
                 continue
+            break
         if retries == 0:
             print("Failed to export after 3 attempts, skipping this file.")
+        
     driver.quit()

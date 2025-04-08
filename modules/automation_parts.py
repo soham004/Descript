@@ -114,12 +114,31 @@ def delete_last_composition(driver:webdriver.Chrome):
 
 def createNewComposition(driver:webdriver.Chrome, composition_name:str = None):
     # //button[@data-testid="composition-popover-trigger"]
+    actionChains = ActionChains(driver)
+    retry = 3
     try:
         driver.find_element(By.XPATH, '//div[@data-testid="composition-popover-content"]')
     except NoSuchElementException:
-        composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
-        composition_popup.click()
-        print("Composition popup clicked")
+        while retry > 0:
+            try:
+                composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
+                composition_popup.click()
+                print("Composition popup clicked")
+                break
+            except Exception as e:
+                logging.info(f"Error in try block on line 124: {e}")
+                print("Error occurred, retrying...")
+                actionChains.send_keys(Keys.ESCAPE).perform()
+                actionChains.send_keys(Keys.ESCAPE).perform()
+                actionChains.send_keys(Keys.ESCAPE).perform()
+                actionChains.send_keys(Keys.ESCAPE).perform()
+                time.sleep(1)
+                retry -= 1
+                if retry == 0:
+                    print("Failed to click the composition popup after 3 attempts.")
+                    driver.quit()
+                    exit()
+        
     time.sleep(1)
     new_composition_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'New composition')]/parent::span/parent::button")))
     new_composition_button.click()
