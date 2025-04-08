@@ -14,7 +14,8 @@ with open('config.json', 'r') as f:
     config = json.load(f)
 
 
-os.makedirs("downloadedAudio\\.tempLog", exist_ok=True)
+os.makedirs("downloadedAudio", exist_ok=True)
+os.makedirs("inputFiles", exist_ok=True)
 
 current_directory = os.getcwd()
 download_dir = os.path.join(current_directory, "downloadedAudio")
