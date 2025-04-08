@@ -1,0 +1,18 @@
+2025-04-07 22:21:22,382 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-3-death-chamber.mp3', 'chapter-11-pensieve-memories.mp3'] in folder inputFiles\testComp1
+2025-04-07 22:21:40,416 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-2-pensieve-memories.mp3'] in folder inputFiles\testComp2
+2025-04-07 22:21:50,921 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-2-pensieve-memories.mp3'] in folder inputFiles\testComp3
+2025-04-07 22:22:01,555 - INFO - Audio files to be uploaded: ['testComp1.mp3', 'testComp2.mp3', 'testComp3.mp3']
+2025-04-07 22:24:50,100 - INFO - Error code from Windows: 0 - The operation completed successfully.
+2025-04-07 22:25:00,101 - INFO - Error code from Windows: 0 - The operation completed successfully.
+2025-04-07 22:25:10,106 - INFO - Error code from Windows: 0 - The operation completed successfully.
+2025-04-07 23:03:39,789 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-3-death-chamber.mp3', 'chapter-11-pensieve-memories.mp3'] in folder inputFiles\testComp1
+2025-04-07 23:03:56,714 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-2-pensieve-memories.mp3'] in folder inputFiles\testComp2
+2025-04-07 23:04:10,053 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-2-pensieve-memories.mp3'] in folder inputFiles\testComp3
+2025-04-07 23:04:23,903 - INFO - Audio files to be uploaded: ['testComp1.mp3', 'testComp2.mp3', 'testComp3.mp3']
+2025-04-07 23:28:59,760 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-3-death-chamber.mp3', 'chapter-11-pensieve-memories.mp3'] in folder inputFiles\testComp1
+2025-04-07 23:29:24,812 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-2-pensieve-memories.mp3'] in folder inputFiles\testComp2
+2025-04-07 23:29:36,127 - INFO - Sorted .mp3 files: ['chapter-1-cornelius-fudge.mp3', 'chapter-2-pensieve-memories.mp3'] in folder inputFiles\testComp3
+2025-04-07 23:29:47,405 - INFO - Audio files to be uploaded: ['testComp1.mp3', 'testComp2.mp3', 'testComp3.mp3']
+2025-04-07 23:33:59,756 - INFO - Error code from Windows: 0 - The operation completed successfully.
+2025-04-07 23:34:09,757 - INFO - Error code from Windows: 0 - The operation completed successfully.
+2025-04-07 23:34:19,761 - INFO - Error code from Windows: 0 - The operation completed successfully.

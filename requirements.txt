@@ -1,0 +1,9 @@
+lib==4.0.0
+pyautogui==0.9.54
+pydub==0.25.1
+pygetwindow==0.0.9
+pyperclip==1.9.0
+pywin32==310
+selenium==4.31.0
+selenium_stealth==1.0.6
+win10toast==0.9
