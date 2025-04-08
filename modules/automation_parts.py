@@ -243,7 +243,10 @@ def useAudioFile(driver:webdriver.Chrome, audioFile:str):
     applyStudioSound(driver)
 
 
-def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None):
+def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None) -> bool:
+
+    exportSuccess = True
+
     exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="publish-popover-trigger"]')))
     if exportButton.get_attribute("data-state") == "closed":
         exportButton.click()
@@ -253,11 +256,14 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
     time.sleep(1)
 
     if destination == "web":
-        webOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Web link"]')))
-        webOption.click()
-        time.sleep(1)
-        final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="publish-button"]')))
-        final_exportButton.click()
+        try:
+            WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
+        except TimeoutException:
+            webOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Web link"]')))
+            webOption.click()
+            time.sleep(1)
+            final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="publish-button"]')))
+            final_exportButton.click()
 
     elif destination == "local":
         localOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]')))
@@ -308,6 +314,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
             print("Web Export completed!")
         except TimeoutException:
+            exportSuccess = False
             print("Web export failed or timed out.")
     
     elif destination == "local":
@@ -323,11 +330,11 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
                 driver.find_element(By.XPATH, "//div[contains(@class,'Spinner-module')]")
                 print("Local Export in progress...") if exportOnce else None
                 exportOnce = False
-
             except NoSuchElementException:
                 print("Local Export completed!")
                 break
             if time.time() - start_time > downloadTimeoutPerComposition:
+                exportSuccess = False
                 print("File download timed out.")
                 break
         time.sleep(.4)
@@ -341,4 +348,6 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
         actionChains.send_keys(Keys.ESCAPE).perform()
         actionChains.send_keys(Keys.ESCAPE).perform()
     time.sleep(1)
+    return exportSuccess
+
 

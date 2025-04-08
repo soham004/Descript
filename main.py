@@ -73,9 +73,22 @@ if __name__ == "__main__":
     # delete_last_composition(driver=driver)
     time.sleep(2)
     for audioFile in audioFiles:
-        print("")
-        createNewComposition(driver)
-        useAudioFile(driver, audioFile)
-        exportComposition(driver, destination="web", audioFilename=audioFile)
-        exportComposition(driver, destination="local", audioFilename=audioFile)
+        retries = 3
+        while retries > 0:
+            print("")
+            createNewComposition(driver)
+            useAudioFile(driver, audioFile)
+            success = exportComposition(driver, destination="web", audioFilename=audioFile)
+            if not success:
+                print("Export failed, retrying...")
+                retries -= 1
+                # time.sleep(5)
+                continue
+            success = exportComposition(driver, destination="local", audioFilename=audioFile)
+            if not success:
+                print("Export failed, retrying...")
+                retries -= 1
+                # time.sleep(5)
+                continue
+
     driver.quit()
