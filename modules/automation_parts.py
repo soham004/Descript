@@ -11,15 +11,36 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import *
 import pyautogui
 import pygetwindow as gw
+import pyperclip
+
 
 from modules.utils import *
 from modules.notifier import *
 
 import ctypes
 
-# Allow the current process to set the foreground window
 ctypes.windll.user32.AllowSetForegroundWindow(-1)
 
+def save_clipboard_link(file_path="downloadLinks.txt"):
+    # Read clipboard content
+    clipboard_content = pyperclip.paste().strip()
+
+    # Regex to check for a URL
+    url_pattern = re.compile(
+        r'^(https?://|www\.)[^\s/$.?#].[^\s]*$', re.IGNORECASE
+    )
+
+    if url_pattern.match(clipboard_content):
+        with open(file_path, 'a', encoding='utf-8') as f:
+            f.write(clipboard_content + '\n')
+        logging.info(f"Saved link: {clipboard_content} to {file_path}")
+        print(f"Link saved: {clipboard_content}")
+    else:
+        logging.info("Clipboard content is not a valid link.")
+        print("Clipboard content is not a valid link.")
+
+
+# Allow the current process to set the foreground window
 def waitForLoginToComplete(driver:webdriver.Chrome):
     # Wait for the login to complete by checking for the presence of the "New Project" button
     try:
@@ -134,10 +155,11 @@ def createNewComposition(driver:webdriver.Chrome, composition_name:str = None):
                 actionChains.send_keys(Keys.ESCAPE).perform()
                 time.sleep(1)
                 retry -= 1
-                if retry == 0:
-                    print("Failed to click the composition popup after 3 attempts.")
-                    driver.quit()
-                    exit()
+
+        if retry == 0:
+            print("Failed to click the composition popup after 3 attempts.")
+            driver.quit()
+            exit()
         
     time.sleep(1)
     new_composition_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'New composition')]/parent::span/parent::button")))
@@ -284,6 +306,25 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="publish-button"]')))
             final_exportButton.click()
 
+    
+    if destination == "web":
+        # Wait for published text
+        webExportComplete = False
+        try:
+            print(f"Waiting {200/60} mins for web export to complete...")
+            WebDriverWait(driver, 200).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
+            print("Web Export completed!")
+            webExportComplete = True
+        except TimeoutException:
+            exportSuccess = False
+            print("Web export failed or timed out.")
+        
+        if webExportComplete:
+            copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, 'aria-label="Copy published page link"')))
+            copyLinkButton.click()
+            time.sleep(1)
+            save_clipboard_link()
+    
     elif destination == "local":
         localOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]')))
         localOption.click()
@@ -326,15 +367,6 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
         pyautogui.write(file_path, interval=0.05)
         time.sleep(.5)
         pyautogui.press('enter')
-        
-    if destination == "web":
-        # Wait for published text
-        try:
-            WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
-            print("Web Export completed!")
-        except TimeoutException:
-            exportSuccess = False
-            print("Web export failed or timed out.")
     
     elif destination == "local":
         #wait for a .mp3 in the download folder
@@ -362,10 +394,11 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
         close_export_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close"]')))
         close_export_button.click()
     except TimeoutException:
-        actionChains = ActionChains(driver)
-        actionChains.send_keys(Keys.ESCAPE).perform()
-        actionChains.send_keys(Keys.ESCAPE).perform()
-        actionChains.send_keys(Keys.ESCAPE).perform()
+        pass
+    actionChains = ActionChains(driver)
+    actionChains.send_keys(Keys.ESCAPE).perform()
+    actionChains.send_keys(Keys.ESCAPE).perform()
+    actionChains.send_keys(Keys.ESCAPE).perform()
     time.sleep(1)
     return exportSuccess
 

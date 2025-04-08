@@ -1,5 +1,6 @@
 from modules.utils import *
 from modules.automation_parts import *
+from modules.descriptLinkDownload import downloadFromDescript
 
 import json
 import time
@@ -46,6 +47,10 @@ options.add_argument('log-level=3')
 # options.add_experimental_option("detach", True)
 
 if __name__ == "__main__":
+
+    with open('downloadLinks.txt', 'w') as f: # Clear the file content
+        f.write('')
+    
     mergebase_folder = "inputFiles"
     merge_all(mergebase_folder)
     audioFiles = os.listdir(mergebase_folder)
@@ -83,13 +88,16 @@ if __name__ == "__main__":
                 print("Export failed, retrying...")
                 retries -= 1
                 continue
-            success = exportComposition(driver, destination="local", audioFilename=audioFile)
-            if not success:
-                print("Export failed, retrying...")
-                retries -= 1
-                continue
             break
         if retries == 0:
             print("Failed to export after 3 attempts, skipping this file.")
-        
+    
+    with open('downloadLinks.txt', 'r') as f:
+        links = f.readlines()
+    
+    for link in links:
+        link = link.strip()
+        if link:
+            downloadFromDescript(driver, link)
+
     driver.quit()
