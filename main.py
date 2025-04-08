@@ -90,5 +90,6 @@ if __name__ == "__main__":
                 retries -= 1
                 # time.sleep(5)
                 continue
-
+        if retries == 0:
+            print("Failed to export after 3 attempts, skipping this file.")
     driver.quit()
