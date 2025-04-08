@@ -24,6 +24,7 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
     time.sleep(5)
     for _ in range(3):
         try:
+            print(f"Waiting {downloadTimeoutPerComposition/60} mins for download button...")
             downloadButton = WebDriverWait(driver, downloadTimeoutPerComposition).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Download"]')))
             downloadButton.click()
             break
@@ -48,7 +49,7 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
         time.sleep(0.5)
         if "descriptusercontent" in driver.current_url:
             r = requests.get(driver.current_url)
-            filename = filename.split(".")[0] + driver.current_url.split(".")[-1]
+            filename = filename.split(".")[0] + "." + driver.current_url.split(".")[-1]
             path = os.path.join(os.getcwd(), "downloadedAudio", filename)
             logging.info(f"Downloading file: {filename} to {path}")
             with open(path, "wb") as f:

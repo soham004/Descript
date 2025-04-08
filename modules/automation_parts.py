@@ -63,9 +63,12 @@ def loginToDescript(driver:webdriver.Chrome):
 
 def setUpProject(driver:webdriver.Chrome):
     # Wait for the "New Project" button to be present and click it
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+    maxWaitTimeForOpeningProject = config['maxWaitTimeForOpeningProject']
     try:
         print("Waiting for project setup...")
-        WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Open app menu"]'))).click()
+        WebDriverWait(driver, maxWaitTimeForOpeningProject).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Open app menu"]'))).click()
         time.sleep(1)
         # Wait for the "Create a new project" button to be present and click it
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div'))).click()
