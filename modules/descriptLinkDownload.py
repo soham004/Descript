@@ -41,6 +41,9 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str):
             logging.info("Download button not found or not clickable.")
             print("Download button not found or not clickable.")
             return False
+        time.sleep(0.1)
+    time.sleep(5)
+
 
     
 
