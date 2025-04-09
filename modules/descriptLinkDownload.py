@@ -48,6 +48,8 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
         driver.switch_to.window(tab)
         time.sleep(0.5)
         if "descriptusercontent" in driver.current_url:
+            print(f"Downloading file from {driver.current_url}...")
+            logging.info(f"Downloading file from {driver.current_url}...")
             r = requests.get(driver.current_url)
             filename = filename.split(".")[0] + "." + driver.current_url.split(".")[-1]
             path = os.path.join(os.getcwd(), "downloadedAudio", filename)

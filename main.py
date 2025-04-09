@@ -52,7 +52,7 @@ if __name__ == "__main__":
         f.write('')
     
     mergebase_folder = "inputFiles"
-    # merge_all(mergebase_folder)
+    merge_all(mergebase_folder)
     audioFiles = os.listdir(mergebase_folder)
     audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
     logging.info(f"Audio files to be uploaded: {audioFiles}")
@@ -88,16 +88,7 @@ if __name__ == "__main__":
             print("")
             createNewComposition(driver)
             useAudioFile(driver, audioFile)
-            # try:
             success = exportComposition(driver, destination="web", audioFilename=audioFile)
-            # except UnexpectedAlertPresentException:
-            #     pyautogui.hotkey("ctrl", "c")  # Copy alert text to clipboard
-            #     pyautogui.press('esc')  # Press Escape to close the alert
-            #     pyautogui.press('esc')
-            #     pyautogui.press('esc')
-            #     # pyperclip.copy(alert.text)  # Copy alert text to clipboard
-            #     save_clipboard_link()
-            #     success = True
             if not success:
                 print("Export failed, retrying...")
                 retries -= 1

@@ -4,3 +4,4 @@ config.json
 junk
 *.log
 *.txt
+modules/__pycache__/*
