@@ -102,7 +102,9 @@ if __name__ == "__main__":
                 print("Failed to export after 3 attempts, skipping this file.")
         except Exception as e:
             print(f"Error processing {audioFile}: {e}")
-            logging.error(f"Error processing {audioFile}: {e}")
+            
+            logging.error(f"{traceback.format_exc()}")
+            
             continue
     
     # Download all the files
