@@ -55,6 +55,9 @@ if __name__ == "__main__":
     mergebase_folder = "inputFiles"
     if '--no-merge' not in sys.argv:
         merge_all(mergebase_folder)
+    else:
+        print("Skipping merging of files.")
+        print("Using just the .mp3 files present in the inputFiles folder and not any subfolders.")
     
     audioFiles = os.listdir(mergebase_folder)
     audioFiles = [f for f in audioFiles if f.endswith('.mp3')]

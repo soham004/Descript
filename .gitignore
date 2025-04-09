@@ -5,3 +5,4 @@ junk
 *.log
 *.txt
 modules/__pycache__/*
+test.py
