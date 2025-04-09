@@ -13,9 +13,8 @@ import pyautogui
 import pygetwindow as gw
 import traceback
 
-
 from modules.utils import *
-from modules.notifier import *
+from modules.notifier import notify
 
 import ctypes
 
@@ -33,6 +32,7 @@ def waitForLoginToComplete(driver:webdriver.Chrome):
         print("Login successful!")
     except TimeoutException:
         print("Login failed or timed out.")
+        notify("Descritpt Login", "Login failed or timed out.")
         driver.quit()
         exit()
 
@@ -64,6 +64,7 @@ def loginToDescript(driver:webdriver.Chrome):
         # Wait for the "New Project" button to be present
     except TimeoutException:
         print("Login failed please check you internet connection.")
+        notify("Descript Login", "Login failed please check you internet connection.")
         driver.quit()
         exit()
 
