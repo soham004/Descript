@@ -4,7 +4,7 @@ import win32con
 import os
 from pydub import AudioSegment
 import re  # Add this import for sorting by chapter numbers
-
+import traceback  # Add this import for error handling
 import pyperclip
 
 import logging  # Add this import for logging
@@ -83,13 +83,15 @@ def merge_mp3_files_in_folder(folder_path, output_folder):
             file_path = os.path.join(folder_path, mp3_file)
             audio = AudioSegment.from_file(file_path)
             combined_audio += audio
-
+            logging.info(f"Added {mp3_file} to combined audio.")
         # Save the merged file in the output folder with the folder name
         output_file = os.path.join(output_folder, f"{os.path.basename(folder_path)}.mp3")
         combined_audio.export(output_file, format="mp3")
         print(f"Merged file saved as: {output_file}")
+        logging.info(f"Merged file saved as: {output_file}")
     except Exception as e:
         print(f"Error merging .mp3 files: {e}")
+        logging.error(f"Error merging .mp3 files: {traceback.format_exc()}")
 
 def merge_all(base_folder):
     """
