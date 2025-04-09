@@ -367,8 +367,8 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             print("Web export failed or timed out.")
         time.sleep(2)
         if webExportComplete:
-            copySuccessul = False
-            while not copySuccessul:
+            copy_successful = False
+            while not copy_successful:
                 copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]')))
                 # location = copyLinkButton.location
                 # size = copyLinkButton.size
@@ -381,7 +381,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
                 actionChains = ActionChains(driver)
                 actionChains.move_to_element(copyLinkButton).click().perform()
                 time.sleep(2)
-                copySuccessul = save_clipboard_link()
+                copy_successful = save_clipboard_link()
                 clear_clipboard()
     
     elif destination == "local":

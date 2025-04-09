@@ -4,13 +4,24 @@ import os
 import sys
 import re
 import pyperclip
+from pydub import AudioSegment
 # import ctypes
 # # Allow the current process to set the foreground window
 # ctypes.windll.user32.AllowSetForegroundWindow(-1)
 # gw.getWindowsWithTitle("Warning:")[0].activate()
 # time.sleep(5)
-print(sys.argv)
-logging.basicConfig(filename='file.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# print(sys.argv)
+# logging.basicConfig(filename='file.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def get_duration_pydub(file_path):
+   audio_file = AudioSegment.from_file(file_path)
+   duration = audio_file.duration_seconds
+   return duration
+
+file_path = 'inputFiles\\oraora.mp3'  # Replace with your audio file path
+duration = get_duration_pydub(file_path)
+print(f"Duration: {duration:.2f} seconds")
+
 # audioFilename = "test.mp3"  # Replace with your audio filename
 # exportFomat = "mp3"  # Replace with your desired export format
 # file_path = os.path.join(os.getcwd(), "downloadedAudio", f"{audioFilename.split('.')[0]}.{exportFomat}")
