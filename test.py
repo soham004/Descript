@@ -1,6 +1,7 @@
 import time
 import logging
 import os
+import sys
 import re
 import pyperclip
 # import ctypes
@@ -8,19 +9,19 @@ import pyperclip
 # ctypes.windll.user32.AllowSetForegroundWindow(-1)
 # gw.getWindowsWithTitle("Warning:")[0].activate()
 # time.sleep(5)
-
+print(sys.argv)
 logging.basicConfig(filename='file.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # audioFilename = "test.mp3"  # Replace with your audio filename
 # exportFomat = "mp3"  # Replace with your desired export format
 # file_path = os.path.join(os.getcwd(), "downloadedAudio", f"{audioFilename.split('.')[0]}.{exportFomat}")
 # logging.info(f"File path: {file_path}")
 
-mergebase_folder = "inputFiles"
-# merge_all(mergebase_folder)
-audioFiles = os.listdir(mergebase_folder)
-audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
+# mergebase_folder = "inputFiles"
+# # merge_all(mergebase_folder)
+# audioFiles = os.listdir(mergebase_folder)
+# audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
 
-print(f"Audio files to be uploaded: {audioFiles}")
+# print(f"Audio files to be uploaded: {audioFiles}")
 
 # with open('downloadLinks.txt', 'w') as f: # Clear the file content
 #     f.write('')

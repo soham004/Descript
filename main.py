@@ -2,6 +2,7 @@ from modules.utils import *
 from modules.automation_parts import *
 from modules.descriptLinkDownload import downloadFromDescript
 
+import sys
 import json
 import time
 import os
@@ -52,7 +53,9 @@ if __name__ == "__main__":
         f.write('')
     
     mergebase_folder = "inputFiles"
-    merge_all(mergebase_folder)
+    if '--no-merge' not in sys.argv:
+        merge_all(mergebase_folder)
+    
     audioFiles = os.listdir(mergebase_folder)
     audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
     logging.info(f"Audio files to be uploaded: {audioFiles}")
