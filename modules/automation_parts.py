@@ -171,8 +171,7 @@ def createNewComposition(driver:webdriver.Chrome, composition_name:str = None):
 
         if retry == 0:
             print("Failed to click the composition popup after 3 attempts.")
-            driver.quit()
-            exit()
+            raise Exception("Failed to click the composition popup after 3 attempts.")
         
     time.sleep(1)
     new_composition_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'New composition')]/parent::span/parent::button")))
@@ -251,14 +250,18 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     try:
         last_file = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]')))[-1]
         ActionChains(driver).context_click(last_file).perform()
+    except TimeoutException:
+        print("Failed to find the file button.")
+        raise Exception("Failed to find the file button.")
+    try:
         time.sleep(1)
         insert_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Insert into script")]/parent::div/parent::div')))
         # insert_button.click()
         click_element(driver, insert_button)
     except TimeoutException:
-        print("Failed to find the file or insert button.")
-        driver.quit()
-        exit()
+        print("Failed to find the insert button.")
+        raise Exception("Failed to find the insert button.")
+
     time.sleep(2)
     closeTranscribeButton = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Close dialog']")))
     # closeTranscribeButton.click()
@@ -275,7 +278,7 @@ def applyStudioSound(driver:webdriver.Chrome):
     # studioSoundButton.click()
     click_element(driver, studioSoundButton)
     time.sleep(1)
-    
+
     # studioSoundEffectsButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-key="studio-sound"]/.//button[@aria-label="Effect settings"]')))
     # # studioSoundEffectsButton.click()
     # click_element(driver, studioSoundEffectsButton)

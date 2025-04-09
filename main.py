@@ -85,20 +85,25 @@ if __name__ == "__main__":
     # Generate all the files
 
     for audioFile in audioFiles:
-        retries = 3
-        success = False
-        while retries > 0:
-            print("")
-            createNewComposition(driver)
-            useAudioFile(driver, audioFile)
-            success = exportComposition(driver, destination="web", audioFilename=audioFile)
-            if not success:
-                print("Export failed, retrying...")
-                retries -= 1
-                continue
-            break
-        if retries == 0:
-            print("Failed to export after 3 attempts, skipping this file.")
+        try:
+            retries = 3
+            success = False
+            while retries > 0:
+                print("")
+                createNewComposition(driver)
+                useAudioFile(driver, audioFile)
+                success = exportComposition(driver, destination="web", audioFilename=audioFile)
+                if not success:
+                    print("Export failed, retrying...")
+                    retries -= 1
+                    continue
+                break
+            if retries == 0:
+                print("Failed to export after 3 attempts, skipping this file.")
+        except Exception as e:
+            print(f"Error processing {audioFile}: {e}")
+            logging.error(f"Error processing {audioFile}: {e}")
+            continue
     
     # Download all the files
     with open('downloadLinks.txt', 'r') as f:
