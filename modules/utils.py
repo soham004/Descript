@@ -154,8 +154,10 @@ def get_bearer(filepath:str):
         for i in range(len(lines) - 1):
             if 'Bearer ' in lines[i]:
                 token = lines[i + 1].strip()
+                token = token.strip("',")
+                if(len(token) != 1196):
+                   continue
                 break
-    token = token.strip("',")
     return token
 
 def get_app_id(filepath:str):

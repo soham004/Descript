@@ -53,14 +53,14 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
             r = requests.get(driver.current_url)
             filename = filename.split(".")[0] + "." + driver.current_url.split(".")[-1]
             path = os.path.join(os.getcwd(), "downloadedAudio", filename)
-            logging.info(f"Downloading file: {filename} to {path}")
+            logging.info(f"Writing file: {filename} to {path}")
             with open(path, "wb") as f:
                 f.write(r.content)
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
     time.sleep(5)
 
-def downloadFromDescriptUsingReq(driver:webdriver.Chrome, name:str, composition_names):
+def downloadFromDescriptUsingReq(driver:webdriver.Chrome, names, composition_names):
     bearer_token = get_bearer('runtime_files\\log_entries.txt')
     logging.info(f"Bearer token: {bearer_token}")
     app_id = get_app_id('runtime_files\\log_entries.txt')
@@ -100,10 +100,11 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, name:str, composition_
     # print(response.text)
     logging.info(f"Response: {response.text}")
     response_json = json.loads(response.text)
-
+    i = 0
     for composition in response_json:
         if(composition['name'] in composition_names):
             link = f"https://share.descript.com/view/{composition['url_slug']}"
             logging.info(f"Downloading file from {link}...")
-            downloadFromDescript(driver, link=link, filename=name)
+            downloadFromDescript(driver, link=link, filename=names[i])
+            i += 1
 

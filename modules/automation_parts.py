@@ -238,6 +238,7 @@ def gotoProjectTab(driver:webdriver.Chrome):
 
 def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     # Wait for the search input field to be present and fill it in
+    selected_file_name = None
     try:
         clear_search_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Clear search"]')))
         click_element(driver, clear_search_button)
@@ -250,6 +251,7 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     time.sleep(1)
     try:
         last_file = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]')))[-1]
+        selected_file_name = driver.find_elements(By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]//span[contains(text(), ".mp3")]')[-1].text
         ActionChains(driver).context_click(last_file).perform()
     except TimeoutException:
         print("Failed to find the file button.")
@@ -268,7 +270,7 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     # closeTranscribeButton.click()
     click_element(driver, closeTranscribeButton)
     time.sleep(1)
-    
+    return selected_file_name
 
 def applyStudioSound(driver:webdriver.Chrome):
     underlord_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Underlord')]/parent::button")))
@@ -322,8 +324,9 @@ def applyStudioSound(driver:webdriver.Chrome):
 
 def useAudioFile(driver:webdriver.Chrome, audioFile:str):
     gotoProjectTab(driver)
-    srearchAndSelectFile(driver, audioFile)
+    selected_file_name = srearchAndSelectFile(driver, audioFile)
     applyStudioSound(driver)
+    return selected_file_name.split(".")[0]
 
 
 def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None) -> bool:

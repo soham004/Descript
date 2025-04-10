@@ -115,7 +115,7 @@ if __name__ == "__main__":
     time.sleep(2)
 
     # Generate all the files
-
+    composition_names = []
     for audioFile in audioFiles:
         try:
             retries = 3
@@ -123,7 +123,10 @@ if __name__ == "__main__":
             while retries > 0:
                 print("")
                 createNewComposition(driver)
-                useAudioFile(driver, audioFile)
+                composition_name = useAudioFile(driver, audioFile)
+                if composition_name is not None:
+                    logging.info(f"Composition name: {composition_name}")
+                    composition_names.append(composition_name)
                 success = exportComposition(driver, destination="web", audioFilename=audioFile)
                 if not success:
                     print("Export failed, retrying...")
@@ -137,8 +140,8 @@ if __name__ == "__main__":
             logging.error(f"{traceback.format_exc()}")
             continue
     
-    composition_names = [f for f in os.listdir("inputFiles") if f.endswith('.mp3')]
-    composition_names = [f.split(".")[0] for f in composition_names]
+    # composition_names = [f for f in os.listdir("inputFiles") if f.endswith('.mp3')]
+    # composition_names = [f.split(".")[0] for f in composition_names]
     logging.info(f"Composition names: {composition_names}")
     
     # Download all the files
@@ -151,6 +154,6 @@ if __name__ == "__main__":
             
     #         # downloadFromDescript(driver, link, audioFiles[i])
 
-    for i in range(len(audioFiles)):
-        downloadFromDescriptUsingReq(driver, audioFiles[i], composition_names)
+    
+    downloadFromDescriptUsingReq(driver, audioFiles, composition_names)
     driver.quit()
