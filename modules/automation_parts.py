@@ -20,9 +20,6 @@ import ctypes
 
 ctypes.windll.user32.AllowSetForegroundWindow(-1)
 
-
-
-
 # Allow the current process to set the foreground window
 def waitForLoginToComplete(driver:webdriver.Chrome):
     # Wait for the login to complete by checking for the presence of the "New Project" button
@@ -282,21 +279,6 @@ def applyStudioSound(driver:webdriver.Chrome):
     click_element(driver, studioSoundButton)
     time.sleep(1)
 
-    # studioSoundEffectsButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-key="studio-sound"]/.//button[@aria-label="Effect settings"]')))
-    # # studioSoundEffectsButton.click()
-    # click_element(driver, studioSoundEffectsButton)
-    # time.sleep(1)
-    #//span[contains(text(),"Intensity")]/parent::div/following-sibling::div/input
-    # studioSoundIntensity = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Intensity")]/parent::div/parent::label/parent::div')))
-    # studioSoundIntensity.click()
-    # time.sleep(1)
-    # ActionChains(driver)\
-    #     .send_keys("80")\
-    #     .send_keys(Keys.RETURN)\
-    #     .perform()
-    # time.sleep(1)
-    # close_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="close-button"]')))
-    # close_button.click()
     print("Waiting for studio sound application to start..")
     while True:
         try:
@@ -304,11 +286,7 @@ def applyStudioSound(driver:webdriver.Chrome):
             print("studio sound application started!")
             break
         except TimeoutException:
-            # print("studio sound application failed or timed out.")
             pass
-            # # driver.quit()
-            # exit()
-    
     print("waiting for studio sound to apply...")
     exportOnce = True
     while True:
@@ -369,23 +347,6 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             exportSuccess = False
             print("Web export failed or timed out.")
         time.sleep(2)
-        # if webExportComplete:
-        #     copy_successful = False
-        #     while not copy_successful:
-        #         copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]')))
-        #         # location = copyLinkButton.location
-        #         # size = copyLinkButton.size
-        #         # panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
-        #         # center_x = location['x'] + size['width'] // 2
-        #         # center_y = location['y'] + panel_height + (size['height'] // 2)
-                
-        #         # pyautogui.moveTo(center_x, center_y)
-        #         # pyautogui.click()
-        #         actionChains = ActionChains(driver)
-        #         actionChains.move_to_element(copyLinkButton).click().perform()
-        #         time.sleep(2)
-        #         copy_successful = save_clipboard_link()
-        #         clear_clipboard()
     
     elif destination == "local":
         localOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]')))
