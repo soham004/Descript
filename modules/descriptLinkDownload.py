@@ -71,6 +71,7 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, compositio
     logging.info(f"Fetching compositions from {url}...")
     payload = {}
     headers = {
+        
                 'sec-ch-ua-platform': '"Windows"',
                 'Authorization': f'Bearer {bearer_token}',
                 'x-descript-app-build-number': '20250409.25792',
