@@ -62,7 +62,9 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
 
 def downloadFromDescriptUsingReq(driver:webdriver.Chrome, name:str, composition_names):
     bearer_token = get_bearer('runtime_files\\log_entries.txt')
+    logging.info(f"Bearer token: {bearer_token}")
     app_id = get_app_id('runtime_files\\log_entries.txt')
+    logging.info(f"App ID: {app_id}")
     with open('config.json', 'r') as f:
         config = json.load(f)
     base_url = config["defaultProject"]
