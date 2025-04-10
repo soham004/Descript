@@ -139,10 +139,12 @@ if __name__ == "__main__":
     
     logging.info(f"Composition names: {composition_names}")
 
+    print("Processing browser logs for network events...")
     logs = driver.get_log("performance")
 
     bearer_token = process_browser_logs_for_network_events(logs)
     logging.info(f"Bearer token: {bearer_token}")
+    print("Processing complete...")
 
     downloadFromDescriptUsingReq(driver, audioFiles, composition_names, bearer_token)
 
