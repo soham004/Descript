@@ -105,8 +105,22 @@ def merge_all(base_folder):
         for subdir in os.listdir(base_folder):
             subdir_path = os.path.join(base_folder, subdir)
             if os.path.isdir(subdir_path):  # Check if it's a directory
+                mp3_files = [f for f in os.listdir(subdir_path) if f.endswith('.mp3')]
+                if not mp3_files:
+                    raise ValueError("No .mp3 files found in the folder.")
+
+                # Sort files numerically based on the first number in the filename
+                def extract_first_number(filename):
+                    match = re.search(r'(\d+)', filename)
+                    return int(match.group(1)) if match else float('inf')
+
+                mp3_files.sort(key=extract_first_number)
+                logging.info(f"Sorted .mp3 files: {mp3_files} in folder {subdir_path}")
+                with open(os.path.join(subdir_path, "filelist.txt"), 'w') as f:
+                    for mp3_file in mp3_files:
+                        f.write(f"file '{mp3_file}'\n")
                 print(f"Merging files in: {subdir_path}")
-                cmd = fr'''cd "{subdir_path}" && (for %f in (*.mp3) do @echo file '%f') > filelist.txt && ffmpeg -y -f concat -safe 0 -i filelist.txt -c copy "..\{subdir}.mp3" && del filelist.txt && cd ..\..'''
+                cmd = fr'''cd "{subdir_path}" && ffmpeg -y -f concat -safe 0 -i filelist.txt -c copy "..\{subdir}.mp3" && cd ..\..'''
                 subprocess.run(
                     cmd,
                     shell=True,

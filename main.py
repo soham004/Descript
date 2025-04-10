@@ -2,6 +2,7 @@ from modules.utils import *
 from modules.automation_parts import *
 from modules.descriptLinkDownload import downloadFromDescript
 
+import multiprocessing
 import sys
 import json
 import time
@@ -53,8 +54,11 @@ if __name__ == "__main__":
         f.write('')
     
     mergebase_folder = "inputFiles"
+    process = None
     if '--no-merge' not in sys.argv:
-        merge_all(mergebase_folder)
+        process = multiprocessing.Process(target=merge_all, args=(mergebase_folder,))
+        process.start()
+        # merge_all(mergebase_folder)
     else:
         print("Skipping merging of files.")
         print("Using just the .mp3 files present in the inputFiles folder and not any subfolders.")
@@ -81,6 +85,10 @@ if __name__ == "__main__":
     # input("EEEEE")
     driver.get(config['defaultProject'])
     setUpProject(driver)
+
+    if process:
+        process.join()
+    
     createUploadComposition(driver=driver, base_folder=mergebase_folder)
 
     time.sleep(2)
