@@ -164,6 +164,6 @@ def get_app_id(filepath:str):
         lines = file.readlines()
         for i in range(len(lines) - 1):
             if 'x-descript-app-id' in lines[i]:
-                app_id = lines[i].split(" ")[-1].strip("',")
+                app_id = lines[i].split(" ")[-1].strip().strip('\n').strip("',")
                 break
     return app_id
