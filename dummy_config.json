@@ -1,0 +1,9 @@
+{
+    "email":"email@example.com",
+    "password":"password",
+    "defaultProject":"https://web.descript.com/0Snsba73-7463-8172-hge32-2j2b32uj2/73jyw?editorVariant=default",
+    "uploadTimeoutPerFile":300,
+    "exportFomat":"mp3",
+    "downloadTimeoutPerComposition":1800,
+    "maxWaitTimeForOpeningProject":300
+}
