@@ -1,7 +1,6 @@
 import json
 import time
 from selenium import webdriver
-# import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,7 +11,6 @@ from modules.utils import *
 from modules.notifier import *
 
 def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
-    # //div[contains(text(),"Preparing to render")]
     link = link.strip()
     with open('config.json', 'r') as f:
         config = json.load(f)
@@ -60,7 +58,7 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
             driver.switch_to.window(driver.window_handles[0])
     time.sleep(5)
 
-def downloadFromDescriptUsingReq(driver:webdriver.Chrome, names, composition_names):
+def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, composition_names):
     bearer_token = get_bearer('runtime_files\\log_entries.txt')
     logging.info(f"Bearer token: {bearer_token}")
     app_id = get_app_id('runtime_files\\log_entries.txt')
@@ -96,15 +94,18 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, names, composition_nam
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
             }
     response = requests.request("GET", url, headers=headers, data=payload)
-    
-    # print(response.text)
-    logging.info(f"Response: {response.text}")
+    logging.info(f"Response status code: {response.status_code}")
+    if response.status_code != 200:
+        logging.error(f"Failed to fetch compositions: {response.status_code}")
+        print(f"Failed to fetch compositions: {response.status_code}")
+        return
     response_json = json.loads(response.text)
+
     i = 0
     for composition in response_json:
         if(composition['name'] in composition_names):
             link = f"https://share.descript.com/view/{composition['url_slug']}"
             logging.info(f"Downloading file from {link}...")
-            downloadFromDescript(driver, link=link, filename=names[i])
+            downloadFromDescript(driver, link=link, filename=file_names[i])
             i += 1
 

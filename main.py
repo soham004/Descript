@@ -1,6 +1,6 @@
 from modules.utils import *
 from modules.automation_parts import *
-from modules.descriptLinkDownload import downloadFromDescript, downloadFromDescriptUsingReq
+from modules.descriptLinkDownload import downloadFromDescriptUsingReq
 
 import json
 import pprint
@@ -8,14 +8,8 @@ import sys
 import json
 import time
 import os
-# import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium_stealth import stealth
-# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
-# capabilities = DesiredCapabilities.CHROME
-# capabilities["loggingPrefs"] = {"performance": "ALL"}  # chromedriver < ~75
-# capabilities['goog:loggingPrefs'] = {"performance": "ALL"}  # chromedriver 75+
 
 config = None
 # Load the config file
@@ -102,7 +96,6 @@ if __name__ == "__main__":
     driver.get("https://web.descript.com/")
 
     loginToDescript(driver)
-    # input("EEEEE")
     driver.get(config['defaultProject'])
     setUpProject(driver)
     logs = driver.get_log("performance")
@@ -142,20 +135,7 @@ if __name__ == "__main__":
             logging.error(f"{traceback.format_exc()}")
             continue
     
-    # composition_names = [f for f in os.listdir("inputFiles") if f.endswith('.mp3')]
-    # composition_names = [f.split(".")[0] for f in composition_names]
     logging.info(f"Composition names: {composition_names}")
-    
-    # Download all the files
-    # with open('downloadLinks.txt', 'r') as f:
-    #     links = f.readlines()
-    
-    # for i, link in enumerate(links):
-    #     link = link.strip()
-    #     if link:
-            
-    #         # downloadFromDescript(driver, link, audioFiles[i])
-
-    
+        
     downloadFromDescriptUsingReq(driver, audioFiles, composition_names)
     driver.quit()
