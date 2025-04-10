@@ -107,5 +107,5 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, compositio
             downloadFromDescript(driver, link=link, filename=file_names[i])
             i += 1
         else:
-            logging.info(f"Composition {composition['name']} not found in the list.")
+            logging.info(f"Composition {composition['name']} not found in the list {composition_names}.")
 
