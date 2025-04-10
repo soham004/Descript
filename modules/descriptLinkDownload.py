@@ -68,6 +68,7 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, name:str, composition_
     base_url = config["defaultProject"]
     project_id = base_url.split("/")[-2]
     url = f"https://web.descript.com/v2/projects/{project_id}/published_projects"
+    logging.info(f"Fetching compositions from {url}...")
     payload = {}
     headers = {
                 'sec-ch-ua-platform': '"Windows"',
@@ -93,11 +94,14 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, name:str, composition_
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
             }
     response = requests.request("GET", url, headers=headers, data=payload)
-    print(response.text)
+    
+    # print(response.text)
+    logging.info(f"Response: {response.text}")
     response_json = json.loads(response.text)
 
     for composition in response_json:
         if(composition['name'] in composition_names):
             link = f"https://share.descript.com/view/{composition['url_slug']}"
+            logging.info(f"Downloading file from {link}...")
             downloadFromDescript(driver, link=link, filename=name)
 

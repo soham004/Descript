@@ -137,8 +137,9 @@ if __name__ == "__main__":
             logging.error(f"{traceback.format_exc()}")
             continue
     
-    composition_names = get_last_composition_names(driver, len(audioFiles))
-    
+    composition_names = [f for f in os.listdir("inputFiles") if f.endswith('.mp3')]
+    composition_names = [f.split(".")[0] for f in composition_names]
+    logging.info(f"Composition names: {composition_names}")
     
     # Download all the files
     # with open('downloadLinks.txt', 'r') as f:
