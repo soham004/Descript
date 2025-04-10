@@ -60,6 +60,44 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
             driver.switch_to.window(driver.window_handles[0])
     time.sleep(5)
 
+def downloadFromDescriptUsingReq(driver:webdriver.Chrome, name:str, composition_names):
+    bearer_token = get_bearer('runtime_files\\log_entries.txt')
+    app_id = get_app_id('runtime_files\\log_entries.txt')
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+    base_url = config["defaultProject"]
+    project_id = base_url.split("/")[-2]
+    url = f"https://web.descript.com/v2/projects/{project_id}/published_projects"
+    payload = {}
+    headers = {
+                'sec-ch-ua-platform': '"Windows"',
+                'Authorization': f'Bearer {bearer_token}',
+                'x-descript-app-build-number': '20250409.25792',
+                'x-descript-app-build-type': 'release',
+                'sec-ch-ua': '"Brave";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+                'sec-ch-ua-mobile': '?0',
+                'x-descript-app-name': 'web',
+                'traceparent': '00-a99a97be74c0917ad01eab6423b27a43-4c02adb792f71e76-00',
+                'x-descript-auth': 'auth0',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-version': 'v1',
+                'Content-Type': 'application/json',
+                'x-descript-app-id': f'{app_id}',
+                'x-descript-app-version': '112.0.1',
+                'Sec-GPC': '1',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Dest': 'empty',
+                'host': 'web.descript.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
+            }
+    response = requests.request("GET", url, headers=headers, data=payload)
+    print(response.text)
+    response_json = json.loads(response.text)
 
-    
+    for composition in response_json:
+        if(composition['name'] in composition_names):
+            link = f"https://share.descript.com/view/{composition['url_slug']}"
+            downloadFromDescript(driver, link=link, filename=name)
 

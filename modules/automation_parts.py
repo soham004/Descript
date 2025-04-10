@@ -366,23 +366,23 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             exportSuccess = False
             print("Web export failed or timed out.")
         time.sleep(2)
-        if webExportComplete:
-            copy_successful = False
-            while not copy_successful:
-                copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]')))
-                # location = copyLinkButton.location
-                # size = copyLinkButton.size
-                # panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
-                # center_x = location['x'] + size['width'] // 2
-                # center_y = location['y'] + panel_height + (size['height'] // 2)
+        # if webExportComplete:
+        #     copy_successful = False
+        #     while not copy_successful:
+        #         copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]')))
+        #         # location = copyLinkButton.location
+        #         # size = copyLinkButton.size
+        #         # panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
+        #         # center_x = location['x'] + size['width'] // 2
+        #         # center_y = location['y'] + panel_height + (size['height'] // 2)
                 
-                # pyautogui.moveTo(center_x, center_y)
-                # pyautogui.click()
-                actionChains = ActionChains(driver)
-                actionChains.move_to_element(copyLinkButton).click().perform()
-                time.sleep(2)
-                copy_successful = save_clipboard_link()
-                clear_clipboard()
+        #         # pyautogui.moveTo(center_x, center_y)
+        #         # pyautogui.click()
+        #         actionChains = ActionChains(driver)
+        #         actionChains.move_to_element(copyLinkButton).click().perform()
+        #         time.sleep(2)
+        #         copy_successful = save_clipboard_link()
+        #         clear_clipboard()
     
     elif destination == "local":
         localOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]')))
@@ -467,4 +467,19 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
     time.sleep(1)
     return exportSuccess
 
+
+def get_last_composition_names(driver:webdriver.Chrome, size:int):
+    try:
+        allNamesElements = driver.find_elements(By.XPATH, '//ul[@id="composition-folder-tree"]/li/div[2]/div/span/div/span')
+    except NoSuchElementException:
+        composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
+        # composition_popup.click()
+        click_element(driver, composition_popup)
+        allNamesElements = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="composition-folder-tree"]/li/div[2]/div/span/div/span')))
+    
+    allNames = []
+    for allNamesElement in allNamesElements:
+        allNames.append(allNamesElement.text)
+    
+    return allNames[-size:]
 

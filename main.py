@@ -1,7 +1,9 @@
 from modules.utils import *
 from modules.automation_parts import *
-from modules.descriptLinkDownload import downloadFromDescript
+from modules.descriptLinkDownload import downloadFromDescript, downloadFromDescriptUsingReq
 
+import json
+import pprint
 import sys
 import json
 import time
@@ -9,6 +11,11 @@ import os
 # import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium_stealth import stealth
+# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+# capabilities = DesiredCapabilities.CHROME
+# capabilities["loggingPrefs"] = {"performance": "ALL"}  # chromedriver < ~75
+# capabilities['goog:loggingPrefs'] = {"performance": "ALL"}  # chromedriver 75+
 
 config = None
 # Load the config file
@@ -44,8 +51,23 @@ options.add_argument('--ignore-certificate-errors')
 options.add_argument('--ignore-ssl-errors')
 options.add_experimental_option("prefs", prefs) 
 options.add_argument('log-level=3')
+options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
 
 options.add_experimental_option("detach", True)
+
+def process_browser_logs_for_network_events(logs):
+    """
+    Return only logs which have a method that start with "Network.response", "Network.request", or "Network.webSocket"
+    since we're interested in the network events specifically.
+    """
+    for entry in logs:
+        log = json.loads(entry["message"])["message"]
+        if (
+                "Network.response" in log["method"]
+                or "Network.request" in log["method"]
+                or "Network.webSocket" in log["method"]
+        ):
+            yield log
 
 if __name__ == "__main__":
 
@@ -81,6 +103,13 @@ if __name__ == "__main__":
     # input("EEEEE")
     driver.get(config['defaultProject'])
     setUpProject(driver)
+    logs = driver.get_log("performance")
+
+    events = process_browser_logs_for_network_events(logs)
+    with open("runtime_files\\log_entries.txt", "wt") as out:
+        for event in events:
+            pprint.pprint(event, stream=out)
+    
     createUploadComposition(driver=driver, base_folder=mergebase_folder)
 
     time.sleep(2)
@@ -105,18 +134,22 @@ if __name__ == "__main__":
                 print("Failed to export after 3 attempts, skipping this file.")
         except Exception as e:
             print(f"Error processing {audioFile}: {e}")
-            
             logging.error(f"{traceback.format_exc()}")
-            
             continue
     
-    # Download all the files
-    with open('downloadLinks.txt', 'r') as f:
-        links = f.readlines()
+    composition_names = get_last_composition_names(driver, len(audioFiles))
     
-    for i, link in enumerate(links):
-        link = link.strip()
-        if link:
-            downloadFromDescript(driver, link, audioFiles[i])
+    
+    # Download all the files
+    # with open('downloadLinks.txt', 'r') as f:
+    #     links = f.readlines()
+    
+    # for i, link in enumerate(links):
+    #     link = link.strip()
+    #     if link:
+            
+    #         # downloadFromDescript(driver, link, audioFiles[i])
 
+    for i in range(len(audioFiles)):
+        downloadFromDescriptUsingReq(driver, audioFiles[i], composition_names)
     driver.quit()

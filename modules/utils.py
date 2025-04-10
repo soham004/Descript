@@ -146,3 +146,24 @@ if __name__ == "__main__":
         print("File path copied to clipboard successfully.")
     except Exception as e:
         print(f"Error: {e}")
+
+def get_bearer(filepath:str):
+    token = None
+    with open(filepath, 'r') as file:
+        lines = file.readlines()
+        for i in range(len(lines) - 1):
+            if 'Bearer ' in lines[i]:
+                token = lines[i + 1].strip()
+                break
+    token = token.strip("',")
+    return token
+
+def get_app_id(filepath:str):
+    app_id = ""
+    with open(filepath, 'r') as file:
+        lines = file.readlines()
+        for i in range(len(lines) - 1):
+            if 'x-descript-app-id' in lines[i]:
+                app_id = lines[i].split(" ")[-1].strip("',")
+                break
+    return app_id
