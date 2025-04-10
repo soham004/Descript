@@ -97,6 +97,7 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, compositio
     logging.info(f"Response status code: {response.status_code}")
     if response.status_code != 200:
         logging.error(f"Failed to fetch compositions: {response.status_code}")
+        logging.error(f"Response: {response.text}")
         print(f"Failed to fetch compositions: {response.status_code}")
         return
     response_json = json.loads(response.text)
