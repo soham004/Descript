@@ -140,6 +140,5 @@ if __name__ == "__main__":
     with open("runtime_files\\log_entries.txt", "wt") as out:
         for event in events:
             pprint.pprint(event, stream=out)
-    
     downloadFromDescriptUsingReq(driver, audioFiles, composition_names)
     driver.quit()
