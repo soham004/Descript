@@ -6,6 +6,8 @@ from pydub import AudioSegment
 import re  # Add this import for sorting by chapter numbers
 import traceback  # Add this import for error handling
 import pyperclip
+import subprocess
+
 
 import logging  # Add this import for logging
 # Configure logging
@@ -104,7 +106,15 @@ def merge_all(base_folder):
             subdir_path = os.path.join(base_folder, subdir)
             if os.path.isdir(subdir_path):  # Check if it's a directory
                 print(f"Merging files in: {subdir_path}")
-                merge_mp3_files_in_folder(subdir_path, base_folder)
+                cmd = fr'''cd "{subdir_path}" && (for %f in (*.mp3) do @echo file '%f') > filelist.txt && ffmpeg -y -f concat -safe 0 -i filelist.txt -c copy "..\{subdir}.mp3" && del filelist.txt && cd ..\..'''
+                subprocess.run(
+                    cmd,
+                    shell=True,
+                    stdout=subprocess.DEVNULL,
+                    # stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                print(f"Merged files in: {subdir_path} to {base_folder}\\{subdir}.mp3")
     except Exception as e:
         print(f"Error merging files in subdirectories: {e}")
 
