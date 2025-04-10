@@ -151,12 +151,10 @@ def get_bearer(filepath:str):
     token = None
     with open(filepath, 'r') as file:
         lines = file.readlines()
-        for i in range(len(lines) - 1):
+        for i, _ in reversed(list(enumerate(lines))):
             if 'Bearer ' in lines[i]:
                 token = lines[i + 1].strip()
                 token = token.strip("',")
-                if(len(token) != 1196):
-                   continue
                 break
     return token
 
@@ -164,7 +162,7 @@ def get_app_id(filepath:str):
     app_id = ""
     with open(filepath, 'r') as file:
         lines = file.readlines()
-        for i in range(len(lines) - 1):
+        for i, _ in reversed(list(enumerate(lines))):
             if 'x-descript-app-id' in lines[i]:
                 app_id = lines[i].split(" ")[-1].strip().strip('\n').strip("',")
                 break

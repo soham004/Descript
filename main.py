@@ -54,16 +54,20 @@ options.add_experimental_option("detach", True)
 def process_browser_logs_for_network_events(logs):
     """
     Return only logs which have a method that start with "Network.response", "Network.request", or "Network.webSocket"
-    since we're interested in the network events specifically.
+    and contain an Authorization header with a Bearer token.
     """
     for entry in logs:
         log = json.loads(entry["message"])["message"]
         if (
-                "Network.response" in log["method"]
-                or "Network.request" in log["method"]
-                or "Network.webSocket" in log["method"]
+            "Network.response" in log["method"]
+            or "Network.request" in log["method"]
+            or "Network.webSocket" in log["method"]
         ):
-            yield log
+            # Check if headers exist and contain an Authorization header
+            headers = log.get("params", {}).get("request", {}).get("headers", {})
+            authorization = headers.get("Authorization") or headers.get("authorization")
+            if authorization and authorization.startswith("Bearer ") and not authorization.startswith("Bearer tokenNotNeeded"):
+                yield {"url": log.get("params", {}).get("request", {}).get("url"), "token": authorization}
 
 if __name__ == "__main__":
 
@@ -98,13 +102,7 @@ if __name__ == "__main__":
     loginToDescript(driver)
     driver.get(config['defaultProject'])
     setUpProject(driver)
-    logs = driver.get_log("performance")
 
-    events = process_browser_logs_for_network_events(logs)
-    with open("runtime_files\\log_entries.txt", "wt") as out:
-        for event in events:
-            pprint.pprint(event, stream=out)
-    
     createUploadComposition(driver=driver, base_folder=mergebase_folder)
 
     time.sleep(2)
@@ -136,6 +134,12 @@ if __name__ == "__main__":
             continue
     
     logging.info(f"Composition names: {composition_names}")
-        
+
+    logs = driver.get_log("performance")
+    events = process_browser_logs_for_network_events(logs)
+    with open("runtime_files\\log_entries.txt", "wt") as out:
+        for event in events:
+            pprint.pprint(event, stream=out)
+    
     downloadFromDescriptUsingReq(driver, audioFiles, composition_names)
     driver.quit()
