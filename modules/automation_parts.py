@@ -20,9 +20,6 @@ import ctypes
 
 ctypes.windll.user32.AllowSetForegroundWindow(-1)
 
-
-
-
 # Allow the current process to set the foreground window
 def waitForLoginToComplete(driver:webdriver.Chrome):
     # Wait for the login to complete by checking for the presence of the "New Project" button
@@ -39,7 +36,6 @@ def waitForLoginToComplete(driver:webdriver.Chrome):
 
 def click_element(driver:webdriver.Chrome, web_element):
     driver.execute_script("arguments[0].click();", web_element)
-
 
 def loginToDescript(driver:webdriver.Chrome):
     config = None
@@ -280,21 +276,6 @@ def applyStudioSound(driver:webdriver.Chrome):
     click_element(driver, studioSoundButton)
     time.sleep(1)
 
-    # studioSoundEffectsButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-key="studio-sound"]/.//button[@aria-label="Effect settings"]')))
-    # # studioSoundEffectsButton.click()
-    # click_element(driver, studioSoundEffectsButton)
-    # time.sleep(1)
-    #//span[contains(text(),"Intensity")]/parent::div/following-sibling::div/input
-    # studioSoundIntensity = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Intensity")]/parent::div/parent::label/parent::div')))
-    # studioSoundIntensity.click()
-    # time.sleep(1)
-    # ActionChains(driver)\
-    #     .send_keys("80")\
-    #     .send_keys(Keys.RETURN)\
-    #     .perform()
-    # time.sleep(1)
-    # close_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="close-button"]')))
-    # close_button.click()
     print("Waiting for studio sound application to start..")
     while True:
         try:
@@ -302,10 +283,7 @@ def applyStudioSound(driver:webdriver.Chrome):
             print("studio sound application started!")
             break
         except TimeoutException:
-            # print("studio sound application failed or timed out.")
             pass
-            # # driver.quit()
-            # exit()
     
     print("waiting for studio sound to apply...")
     exportOnce = True
