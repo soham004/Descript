@@ -3,7 +3,6 @@ from modules.automation_parts import *
 from modules.descriptLinkDownload import downloadFromDescriptUsingReq
 
 import json
-import pprint
 import sys
 import json
 import time
@@ -71,9 +70,8 @@ def process_browser_logs_for_network_events(logs):
             authorization = headers.get("Authorization") or headers.get("authorization")
             if authorization and authorization.startswith("Bearer ") and not authorization.startswith("Bearer tokenNotNeeded"):
                 bearer_token = authorization.split(" ")[1]
-                # yield {"url": log.get("params", {}).get("request", {}).get("url"), "token": authorization}
-    
-    return bearer_token
+
+    return bearer_token # Returns the last Bearer token found
 
 if __name__ == "__main__":
 
@@ -145,7 +143,7 @@ if __name__ == "__main__":
 
     bearer_token = process_browser_logs_for_network_events(logs)
     logging.info(f"Bearer token: {bearer_token}")
-    
+
     downloadFromDescriptUsingReq(driver, audioFiles, composition_names, bearer_token)
 
     driver.quit()
