@@ -6,3 +6,4 @@ junk
 *.txt
 modules/__pycache__/*
 test.py
+referance_requests_data.json

@@ -18,7 +18,7 @@ with open('config.json', 'r') as f:
 
 os.makedirs("downloadedAudio", exist_ok=True)
 os.makedirs("inputFiles", exist_ok=True)
-os.makedirs("runtime_files", exist_ok=True)
+# os.makedirs("runtime_files", exist_ok=True)
 
 
 current_directory = os.getcwd()
