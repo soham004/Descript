@@ -51,11 +51,14 @@ options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
 
 options.add_experimental_option("detach", True)
 
+
 def process_browser_logs_for_network_events(logs):
     """
     Return only logs which have a method that start with "Network.response", "Network.request", or "Network.webSocket"
     and contain an Authorization header with a Bearer token.
     """
+    bearer_token = None
+
     for entry in logs:
         log = json.loads(entry["message"])["message"]
         if (
@@ -67,7 +70,10 @@ def process_browser_logs_for_network_events(logs):
             headers = log.get("params", {}).get("request", {}).get("headers", {})
             authorization = headers.get("Authorization") or headers.get("authorization")
             if authorization and authorization.startswith("Bearer ") and not authorization.startswith("Bearer tokenNotNeeded"):
-                yield {"url": log.get("params", {}).get("request", {}).get("url"), "token": authorization}
+                bearer_token = authorization.split(" ")[1]
+                # yield {"url": log.get("params", {}).get("request", {}).get("url"), "token": authorization}
+    
+    return bearer_token
 
 if __name__ == "__main__":
 
@@ -136,9 +142,10 @@ if __name__ == "__main__":
     logging.info(f"Composition names: {composition_names}")
 
     logs = driver.get_log("performance")
-    events = process_browser_logs_for_network_events(logs)
-    with open("runtime_files\\log_entries.txt", "wt") as out:
-        for event in events:
-            pprint.pprint(event, stream=out)
-    downloadFromDescriptUsingReq(driver, audioFiles, composition_names)
+
+    bearer_token = process_browser_logs_for_network_events(logs)
+    logging.info(f"Bearer token: {bearer_token}")
+    
+    downloadFromDescriptUsingReq(driver, audioFiles, composition_names, bearer_token)
+
     driver.quit()

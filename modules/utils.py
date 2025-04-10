@@ -147,23 +147,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
 
-def get_bearer(filepath:str):
-    token = None
-    with open(filepath, 'r') as file:
-        lines = file.readlines()
-        for i, _ in reversed(list(enumerate(lines))):
-            if 'Bearer ' in lines[i]:
-                token = lines[i + 1].strip()
-                token = token.strip("',")
-                break
-    return token
-
-def get_app_id(filepath:str):
-    app_id = ""
-    with open(filepath, 'r') as file:
-        lines = file.readlines()
-        for i, _ in reversed(list(enumerate(lines))):
-            if 'x-descript-app-id' in lines[i]:
-                app_id = lines[i].split(" ")[-1].strip().strip('\n').strip("',")
-                break
-    return app_id

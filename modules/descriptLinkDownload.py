@@ -58,11 +58,8 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
             driver.switch_to.window(driver.window_handles[0])
     time.sleep(5)
 
-def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, composition_names):
-    bearer_token = get_bearer('runtime_files\\log_entries.txt')
-    logging.info(f"Bearer token: {bearer_token}")
-    app_id = get_app_id('runtime_files\\log_entries.txt')
-    logging.info(f"App ID: {app_id}")
+def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, composition_names, bearer_token:str):
+    
     with open('config.json', 'r') as f:
         config = json.load(f)
     base_url = config["defaultProject"]
@@ -71,7 +68,6 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, compositio
     logging.info(f"Fetching compositions from {url}...")
     payload = {}
     headers = {
-        
                 'sec-ch-ua-platform': '"Windows"',
                 'Authorization': f'Bearer {bearer_token}',
                 'x-descript-app-build-number': '20250409.25792',
@@ -85,7 +81,7 @@ def downloadFromDescriptUsingReq(driver:webdriver.Chrome, file_names, compositio
                 'Accept': 'application/json, text/plain, */*',
                 'Accept-version': 'v1',
                 'Content-Type': 'application/json',
-                'x-descript-app-id': f'{app_id}',
+                'x-descript-app-id': 'd4c17ff9-7f77-4dac-9d2f-97bb393871af',
                 'x-descript-app-version': '112.0.1',
                 'Sec-GPC': '1',
                 'Sec-Fetch-Site': 'same-origin',
