@@ -298,6 +298,7 @@ def applyStudioSound(driver:webdriver.Chrome):
     time.sleep(1)
     close_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="close-button"]')))
     close_button.click()
+    logging.info("Studio sound intensity set to " + studioSoundIntensityPercentage + "%")
     print("Waiting for studio sound application to start..")
     while True:
         try:
