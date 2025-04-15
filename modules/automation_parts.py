@@ -269,6 +269,12 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     
 
 def applyStudioSound(driver:webdriver.Chrome):
+    config = None
+    # Load the config file
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+    
+    studioSoundIntensityPercentage = str(config['studioSoundIntensity'])
     underlord_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Underlord')]/parent::button")))
     # underlord_tab.click()
     click_element(driver, underlord_tab)
@@ -282,11 +288,11 @@ def applyStudioSound(driver:webdriver.Chrome):
     click_element(driver, studioSoundEffectsButton)
     time.sleep(1)
     # //span[contains(text(),"Intensity")]/parent::div/following-sibling::div/input
-    studioSoundIntensity = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Intensity")]/parent::div/parent::label/parent::div')))
-    studioSoundIntensity.click()
+    studioSoundIntensityDiv = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Intensity")]/parent::div/parent::label/parent::div')))
+    studioSoundIntensityDiv.click()
     time.sleep(1)
     ActionChains(driver)\
-        .send_keys("80")\
+        .send_keys(studioSoundIntensityPercentage)\
         .send_keys(Keys.RETURN)\
         .perform()
     time.sleep(1)
