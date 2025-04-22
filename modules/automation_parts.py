@@ -39,6 +39,8 @@ def click_element(driver:webdriver.Chrome, web_element):
 
 def loginToDescript(driver:webdriver.Chrome):
     config = None
+
+    action_chains = ActionChains(driver)
     # Load the config file
     with open('config.json', 'r') as f:
         config = json.load(f)
@@ -48,12 +50,21 @@ def loginToDescript(driver:webdriver.Chrome):
     password = config['password']
 
     try:
+
+
+        use_password_instead_button = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(),"Use a password instead")]')))
+        action_chains.move_to_element(use_password_instead_button).click().perform()
+
         # Wait for the email field to be present and fill it in
         WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH, "//input[@type='email']"))).send_keys(email)
         # Wait for the password field to be present and fill it in
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//input[@type='password']"))).send_keys(password)
+        # WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//input[@type='password']"))).send_keys(password)
 
         # Wait for the login button to be present and click it
+        # WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@type="submit"]'))).click()
+
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//input[@type='password']"))).send_keys(password)
+
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@type="submit"]'))).click()
 
         waitForLoginToComplete(driver)
@@ -61,7 +72,7 @@ def loginToDescript(driver:webdriver.Chrome):
     except TimeoutException:
         print("Login failed please check you internet connection.")
         notify("Descript Login", "Login failed please check you internet connection.")
-        driver.quit()
+        # driver.quit()
         exit()
 
 def setUpProject(driver:webdriver.Chrome):
