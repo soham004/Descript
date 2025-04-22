@@ -1,6 +1,6 @@
 downloadedAudio/*.*
 inputFiles/*
-config.json
+*.json
 junk
 *.log
 *.txt

@@ -72,7 +72,7 @@ def loginToDescript(driver:webdriver.Chrome):
     except TimeoutException:
         print("Login failed please check you internet connection.")
         notify("Descript Login", "Login failed please check you internet connection.")
-        # driver.quit()
+        driver.quit()
         exit()
 
 def setUpProject(driver:webdriver.Chrome):
