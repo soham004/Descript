@@ -35,7 +35,17 @@ def waitForLoginToComplete(driver:webdriver.Chrome):
 
 
 def click_element(driver:webdriver.Chrome, web_element):
-    driver.execute_script("arguments[0].click();", web_element)
+    try:
+        logging.debug(f"Clicking element: {web_element.tag_name} {web_element.get_attribute('class')}")
+        driver.execute_script("arguments[0].click();", web_element)
+        logging.debug("Click successful")
+    except Exception as e:
+        logging.error(f"Failed to click element: {str(e)}\n{traceback.format_exc()}")
+        # Still try the click to maintain original behavior
+        try:
+            driver.execute_script("arguments[0].click();", web_element)
+        except:
+            pass
 
 def loginToDescript(driver:webdriver.Chrome):
     config = None
@@ -220,7 +230,7 @@ def createUploadComposition(driver:webdriver.Chrome, base_folder:str='inputFiles
         exit()
 
     
-    print(f"Waiting {(uploadTimePerFile * len(audioFiles))/60} mins for all activities to complete..")
+    print("Waiting {:.2f} mins for all activities to complete..".format((uploadTimePerFile * len(audioFiles))/60))
 
     start_time = time.time()
     printOnce = True
@@ -255,27 +265,83 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
         time.sleep(.5)
     except TimeoutException:
         pass
+        
     searchField = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="search"]')))
-    searchField.send_keys(audioFile.split(".")[0])
+    audio_file_name = audioFile.split(".")[0]
+    logging.info(f"Searching for file: {audio_file_name}")
+    searchField.send_keys(audio_file_name)
     time.sleep(1)
+    
     try:
-        last_file = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]')))[-1]
-        ActionChains(driver).context_click(last_file).perform()
+        # Get all file elements and their names
+        file_elements = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+            (By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]')))
+        file_name_spans = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located(
+            (By.XPATH, '//ul[@id="project-files-tree"]/li/div[3]/div/span/div/span')))
+        
+        file_names = [span.text for span in file_name_spans]
+        logging.debug(f"Found files: {file_names}")
+        
+        # Initialize variables for tracking best match
+        target_index = -1
+        latest_version = -1
+        exact_match_index = -1
+        
+        # Find the best matching file based on the rules
+        for i, filename in enumerate(file_names):
+            base_name = filename.split('.')[0]
+            
+            # Check for exact match (e.g., "lol 1" matches "lol 1.mp3")
+            if base_name == audio_file_name:
+                exact_match_index = i
+            
+            # Check for versioned match (e.g., "lol 1-2" for "lol 1")
+            elif base_name.startswith(audio_file_name + "-"):
+                try:
+                    version = int(base_name.split('-')[1])
+                    if version > latest_version:
+                        latest_version = version
+                        target_index = i
+                except (ValueError, IndexError):
+                    pass
+        
+        # Select the file - prefer latest version, fall back to exact match if no versions
+        if target_index >= 0:
+            selected_index = target_index
+            logging.info(f"Selected versioned file: {file_names[selected_index]} (version {latest_version})")
+        elif exact_match_index >= 0:
+            selected_index = exact_match_index
+            logging.info(f"Selected exact match file: {file_names[selected_index]}")
+        else:
+            # Fallback to the last file if no match found
+            selected_index = len(file_elements) - 1
+            logging.warning(f"No ideal match found, defaulting to last file: {file_names[selected_index]}")
+        
+        # Right-click on the selected file
+        selected_file = file_elements[selected_index]
+        logging.debug(f"Right-clicking on file: {file_names[selected_index]}")
+        ActionChains(driver).context_click(selected_file).perform()
+        
     except TimeoutException:
-        print("Failed to find the file button.")
-        raise Exception("Failed to find the file button.")
+        error_msg = "Failed to find the file button."
+        logging.error(error_msg)
+        print(error_msg)
+        raise Exception(error_msg)
+        
     try:
         time.sleep(1)
-        insert_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Insert into script")]/parent::div/parent::div')))
-        # insert_button.click()
+        insert_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+            (By.XPATH, '//span[contains(text(),"Insert into script")]/parent::div/parent::div')))
         click_element(driver, insert_button)
     except TimeoutException:
-        print("Failed to find the insert button.")
-        raise Exception("Failed to find the insert button.")
+        error_msg = "Failed to find the insert button."
+        logging.error(error_msg)
+        print(error_msg)
+        raise Exception(error_msg)
 
     time.sleep(2)
-    closeTranscribeButton = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Close dialog']")))
-    # closeTranscribeButton.click()
+    closeTranscribeButton = WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//button[@aria-label='Close dialog']")))
     click_element(driver, closeTranscribeButton)
     time.sleep(1)
     
@@ -312,9 +378,13 @@ def applyStudioSound(driver:webdriver.Chrome):
     close_button.click()
     logging.info("Studio sound intensity set to " + studioSoundIntensityPercentage + "%")
     print("Waiting for studio sound application to start..")
-    while True:
+
+    time_to_wait_for_studio_sound_to_start = 240
+    start_time = time.time()
+    
+    while (time.time() - start_time) < time_to_wait_for_studio_sound_to_start:
         try:
-            WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
+            WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Loading")]')))
             print("studio sound application started!")
             break
         except TimeoutException:
@@ -324,7 +394,7 @@ def applyStudioSound(driver:webdriver.Chrome):
     exportOnce = True
     while True:
         try:
-            driver.find_element(By.XPATH, "//div[contains(@class,'Spinner-module')]")
+            driver.find_element(By.XPATH, '//span[contains(text(),"Loading")]')
             print("Studio Sound application in progress...") if exportOnce else None
             exportOnce = False
         except NoSuchElementException:
@@ -340,6 +410,7 @@ def useAudioFile(driver:webdriver.Chrome, audioFile:str):
 
 
 def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None) -> bool:
+    logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}")
 
     exportSuccess = True
 
@@ -370,81 +441,136 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
         # Wait for published text
         webExportComplete = False
         try:
-            print(f"Waiting {200/60} mins for web export to complete...")
-            WebDriverWait(driver, 200).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
+            logging.info("Waiting for web export to complete (timeout: 200s)")
+            print("Waiting {:.2f} mins for web export to complete...".format((200/60)))
+            
+            # Log intermediate state if it takes too long
+            start_wait = time.time()
+            while True:
+                try:
+                    element = driver.find_element(By.XPATH, '//span[contains(text(),"Published")]')
+                    WebDriverWait(driver, 200).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
+                    break
+                except NoSuchElementException:
+                    # Log progress every 20 seconds
+                    if time.time() - start_wait > 20:
+                        logging.info(f"Still waiting for 'Published' text after {time.time() - start_wait:.1f}s...")
+                        start_wait = time.time()
+                        # Try to log what's on screen instead
+                        try:
+                            logging.debug(f"Current page source excerpt: {driver.page_source[:500]}...")
+                        except:
+                            logging.debug("Couldn't capture page source")
+                    time.sleep(5)
+                    if time.time() - start_wait > 200:
+                        raise TimeoutException("Timed out waiting for Published text")
+                        
+            logging.info("Web Export completed successfully")
             print("Web Export completed!")
             webExportComplete = True
-        except TimeoutException:
+        except TimeoutException as e:
             webExportComplete = False
             exportSuccess = False
+            logging.error(f"Web export timed out: {str(e)}")
             print("Web export failed or timed out.")
+        except Exception as e:
+            webExportComplete = False
+            exportSuccess = False
+            logging.error(f"Unexpected error during web export: {str(e)}\n{traceback.format_exc()}")
+            print(f"Web export failed with error: {str(e)}")
+            
         time.sleep(2)
         if webExportComplete:
+            copy_attempts = 0
             copy_successful = False
-            while not copy_successful:
-                copyLinkButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]')))
-                # location = copyLinkButton.location
-                # size = copyLinkButton.size
-                # panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
-                # center_x = location['x'] + size['width'] // 2
-                # center_y = location['y'] + panel_height + (size['height'] // 2)
-                
-                # pyautogui.moveTo(center_x, center_y)
-                # pyautogui.click()
-                actionChains = ActionChains(driver)
-                actionChains.move_to_element(copyLinkButton).click().perform()
-                time.sleep(2)
-                copy_successful = save_clipboard_link()
-                clear_clipboard()
-    
+            while not copy_successful and copy_attempts < 5:  # Add max retry limit
+                copy_attempts += 1
+                logging.info(f"Attempting to copy published link (attempt {copy_attempts}/5)")
+                try:
+                    copyLinkButton = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]'))
+                    )
+                    logging.debug(f"Copy button found: {copyLinkButton.is_enabled()=}, {copyLinkButton.is_displayed()=}")
+                    
+                    actionChains = ActionChains(driver)
+                    actionChains.move_to_element(copyLinkButton).click().perform()
+                    time.sleep(2)
+                    
+                    # Log clipboard content for debugging
+                    clipboard_content = pyperclip.paste().strip()
+                    logging.debug(f"Clipboard content: '{clipboard_content[:50]}...' (truncated)")
+                    
+                    copy_successful = save_clipboard_link()
+                    logging.info(f"Save clipboard result: {copy_successful}")
+                    clear_clipboard()
+                except Exception as e:
+                    logging.error(f"Error copying link: {str(e)}\n{traceback.format_exc()}")
+                    time.sleep(1)
+
     elif destination == "local":
-        localOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]')))
-        # localOption.click()
-        click_element(driver, localOption)
-        time.sleep(1)
-        config = None
-        # Load the config file
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-
-        exportFomat = config['exportFomat']
-        exportFomat = exportFomat.lower()
-
-        if exportFomat not in ["mp3", "wav", "m4a"]:
-            print("Invalid export format. Deafulting to mp3.")
-            exportFomat = "mp3"
-        
-        formatDropdown = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Format')]/following-sibling::div/button")))
-        # formatDropdown.click()
-        click_element(driver, formatDropdown)
-
-        time.sleep(.5)
-        
-        mp3Option = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, f'//span[contains(text(),"{exportFomat}")]/parent::div/parent::div')))
-        # wavOption.click()
-        click_element(driver, mp3Option)
-
-        time.sleep(.5)
-
-        final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-button"]')))
-        # final_exportButton.click()
-        click_element(driver, final_exportButton)
-
-        file_path = os.path.join(os.getcwd(), "downloadedAudio", f"{audioFilename.split('.')[0]}.{exportFomat}")
-        # pyperclip.copy(file_path)
-        for _ in range(3):
-            time.sleep(10)
+        logging.info("Starting local export process")
+        try:
+            localOption = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]'))
+            )
+            logging.debug(f"Local export option found: {localOption.is_displayed()=}")
+            click_element(driver, localOption)
+            logging.info("Clicked local export option")
+            
+            time.sleep(1)
+            # Load config
             try:
-                gw.getWindowsWithTitle("Warning:")[0].activate()
-                print("Download window brought to front.")
+                with open('config.json', 'r') as f:
+                    config = json.load(f)
+                logging.debug(f"Loaded config: exportFormat={config.get('exportFomat', 'not found')}")
             except Exception as e:
-                logging.info(e)
-                continue
-            break
-        pyautogui.write(file_path, interval=0.05)
-        time.sleep(.5)
-        pyautogui.press('enter')
-    
+                logging.error(f"Error loading config: {str(e)}")
+                config = {"exportFomat": "mp3"}  # Default fallback
+                
+            exportFomat = config.get('exportFomat', 'mp3').lower()
+            
+            if exportFomat not in ["mp3", "wav", "m4a"]:
+                logging.warning(f"Invalid export format '{exportFomat}', defaulting to mp3")
+                print("Invalid export format. Defaulting to mp3.")
+                exportFomat = "mp3"
+                
+            logging.info(f"Selecting format: {exportFomat}")
+            
+            formatDropdown = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Format')]/following-sibling::div/button")))
+            # formatDropdown.click()
+            click_element(driver, formatDropdown)
+
+            time.sleep(.5)
+            
+            mp3Option = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, f'//span[contains(text(),"{exportFomat}")]/parent::div/parent::div')))
+            # wavOption.click()
+            click_element(driver, mp3Option)
+
+            time.sleep(.5)
+
+            final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-button"]')))
+            # final_exportButton.click()
+            click_element(driver, final_exportButton)
+
+            file_path = os.path.join(os.getcwd(), "downloadedAudio", f"{audioFilename.split('.')[0]}.{exportFomat}")
+            # pyperclip.copy(file_path)
+            for _ in range(3):
+                time.sleep(10)
+                try:
+                    gw.getWindowsWithTitle("Warning:")[0].activate()
+                    print("Download window brought to front.")
+                except Exception as e:
+                    logging.info(e)
+                    continue
+                break
+            pyautogui.write(file_path, interval=0.05)
+            time.sleep(.5)
+            pyautogui.press('enter')
+        
+        except Exception as e:
+            logging.error(f"Error during local export: {str(e)}")
+            exportSuccess = False
+
     elif destination == "local":
         #wait for a .mp3 in the download folder
         print("Waiting for file to be downloaded...")
@@ -478,6 +604,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
     actionChains.send_keys(Keys.ESCAPE).perform()
     actionChains.send_keys(Keys.ESCAPE).perform()
     time.sleep(1)
+    logging.info(f"Exiting exportComposition, success={exportSuccess}")
     return exportSuccess
 
 

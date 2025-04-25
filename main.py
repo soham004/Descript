@@ -53,19 +53,17 @@ if __name__ == "__main__":
     with open('downloadLinks.txt', 'w') as f: # Clear the file content
         f.write('')
     
-    mergebase_folder = "inputFiles"
+    input_files_folder = "inputFiles"
     process = None
     if '--no-merge' not in sys.argv:
-        process = multiprocessing.Process(target=merge_all, args=(mergebase_folder,))
+        process = multiprocessing.Process(target=merge_all, args=(input_files_folder,))
         process.start()
         # merge_all(mergebase_folder)
     else:
         print("Skipping merging of files.")
         print("Using just the .mp3 files present in the inputFiles folder and not any subfolders.")
     
-    audioFiles = os.listdir(mergebase_folder)
-    audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
-    logging.info(f"Audio files to be uploaded: {audioFiles}")
+    
     driver = webdriver.Chrome(options=options)
 
     driver.set_page_load_timeout(30)
@@ -89,7 +87,11 @@ if __name__ == "__main__":
     if process:
         process.join()
     
-    createUploadComposition(driver=driver, base_folder=mergebase_folder)
+    audioFiles = os.listdir(input_files_folder)
+    audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
+    logging.info(f"Audio files to be uploaded: {audioFiles}")
+
+    createUploadComposition(driver=driver, base_folder=input_files_folder)
 
     time.sleep(2)
 

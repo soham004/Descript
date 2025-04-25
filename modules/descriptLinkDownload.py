@@ -52,9 +52,13 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
             logging.info(f"Downloading file from {driver.current_url}...")
             r = requests.get(driver.current_url)
             filename = filename.split(".")[0] + "." + driver.current_url.split(".")[-1]
-            path = os.path.join(os.getcwd(), "downloadedAudio", filename)
-            logging.info(f"Downloading file: {filename} to {path}")
-            with open(path, "wb") as f:
+            directory_path = os.path.join(os.getcwd(), "downloadedAudio")
+            file_path = os.path.join(os.getcwd(), "downloadedAudio", filename)
+
+            if not os.path.exists(directory_path):
+                os.makedirs(os.path.dirname(directory_path), exist_ok=True)
+            logging.info(f"Downloading file: {filename} to {file_path}")
+            with open(file_path, "wb") as f:
                 f.write(r.content)
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
