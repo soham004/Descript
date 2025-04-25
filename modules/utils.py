@@ -75,8 +75,16 @@ def merge_mp3_files_in_folder(folder_path, output_folder):
 
         # Sort files numerically based on the first number in the filename
         def extract_first_number(filename):
-            match = re.search(r'(\d+)', filename)
-            return int(match.group(1)) if match else float('inf')
+            # Extract all numbers from the filename
+            numbers = re.findall(r'\d+', filename)
+            
+            # Convert all found numbers to integers
+            # If no numbers found, use infinity for sorting
+            if not numbers:
+                return (float('inf'),)
+            
+            # Return tuple of all numbers found for multi-level sorting
+            return tuple(int(num) for num in numbers)
 
         mp3_files.sort(key=extract_first_number)
         logging.info(f"Sorted .mp3 files: {mp3_files} in folder {folder_path}")
@@ -111,8 +119,16 @@ def merge_all(base_folder):
 
                 # Sort files numerically based on the first number in the filename
                 def extract_first_number(filename):
-                    match = re.search(r'(\d+)', filename)
-                    return int(match.group(1)) if match else float('inf')
+                    # Extract all numbers from the filename
+                    numbers = re.findall(r'\d+', filename)
+                    
+                    # Convert all found numbers to integers
+                    # If no numbers found, use infinity for sorting
+                    if not numbers:
+                        return (float('inf'),)
+                    
+                    # Return tuple of all numbers found for multi-level sorting
+                    return tuple(int(num) for num in numbers)
 
                 mp3_files.sort(key=extract_first_number)
                 logging.info(f"Sorted .mp3 files: {mp3_files} in folder {subdir_path}")
