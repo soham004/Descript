@@ -210,6 +210,8 @@ if __name__ == "__main__":
     for i in range(0, len(audioFiles), files_per_group):
         group = audioFiles[i:i + files_per_group]
         file_groups.append(group)
+
+    logging.info(f"File groups for processing: {file_groups}")
     
     # Create and start threads
     threads = []
