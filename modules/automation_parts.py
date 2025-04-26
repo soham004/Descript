@@ -409,8 +409,8 @@ def useAudioFile(driver:webdriver.Chrome, audioFile:str):
     applyStudioSound(driver)
 
 
-def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None) -> bool:
-    logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}")
+def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None, links_file:str = "downloadLinks.txt") -> bool:
+    logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}, links_file={links_file}")
 
     exportSuccess = True
 
@@ -500,7 +500,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
                     clipboard_content = pyperclip.paste().strip()
                     logging.debug(f"Clipboard content: '{clipboard_content[:50]}...' (truncated)")
                     
-                    copy_successful = save_clipboard_link()
+                    copy_successful = save_clipboard_link(links_file)
                     logging.info(f"Save clipboard result: {copy_successful}")
                     clear_clipboard()
                 except Exception as e:

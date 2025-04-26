@@ -11,9 +11,10 @@ import requests
 from modules.utils import *
 from modules.notifier import *
 
-def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
+def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str, links_file:str = "downloadLinks.txt"):
     # //div[contains(text(),"Preparing to render")]
     link = link.strip()
+    logging.info(f"Downloading from {link} for file {filename} using links file {links_file}")
     with open('config.json', 'r') as f:
         config = json.load(f)
     

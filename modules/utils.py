@@ -163,7 +163,7 @@ def save_clipboard_link(file_path="downloadLinks.txt"):
         with open(file_path, 'a', encoding='utf-8') as f:
             f.write(clipboard_content + '\n')
         logging.info(f"Saved link: {clipboard_content} to {file_path}")
-        print(f"Link saved: {clipboard_content}")
+        print(f"Link saved to {file_path}: {clipboard_content}")
 
         return True
     else:
