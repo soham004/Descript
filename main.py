@@ -120,14 +120,14 @@ def process_file_group(file_group, thread_id, results_dict):
                         if success:
                             # Get the latest link from the clipboard
                             link_content = pyperclip.paste().strip()
-                            if "https://" in link_content and "descript" in link_content:
-                                link = link_content
-                                download_links.append((audioFile, link))
-                                # Save link to thread-specific file
-                                with open(thread_links_file, 'a') as f:
-                                    f.write(f"{audioFile}|{link}\n")
-                                logging.info(f"Thread {thread_id} - Export successful for {audioFile}: {link}")
-                                break
+                            # if "https://" in link_content and "descript" in link_content:
+                            link = link_content
+                            download_links.append((audioFile, link))
+                            # Save link to thread-specific file
+                            with open(thread_links_file, 'a') as f:
+                                f.write(f"{audioFile}|{link}\n")
+                            logging.info(f"Thread {thread_id} - Export successful for {audioFile}: {link}")
+                            break
                         
                         print(f"Thread {thread_id} - Export failed for {audioFile}, retrying... ({retries} attempts left)")
                         retries -= 1
