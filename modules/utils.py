@@ -136,7 +136,7 @@ def merge_all(base_folder):
                     for mp3_file in mp3_files:
                         f.write(f"file '{mp3_file}'\n")
                 print(f"Merging files in: {subdir_path}")
-                cmd = fr'''cd "{subdir_path}" && ffmpeg -y -f concat -safe 0 -i filelist.txt -c copy "..\{subdir}.mp3" && cd ..\..'''
+                cmd = fr'''cd "{subdir_path}" && ..\..\modules\ffmpeg\bin\ffmpeg -y -f concat -safe 0 -i filelist.txt -c copy "..\{subdir}.mp3" && cd ..\..'''
                 subprocess.run(
                     cmd,
                     shell=True,
