@@ -2,9 +2,7 @@ import ctypes
 import win32clipboard as clipboard
 import win32con
 import os
-from pydub import AudioSegment
 import re  # Add this import for sorting by chapter numbers
-import traceback  # Add this import for error handling
 import pyperclip
 import subprocess
 
@@ -61,47 +59,6 @@ def get_absolute_path(file_path):
     Returns the absolute path of the given file.
     """
     return os.path.abspath(file_path)
-
-def merge_mp3_files_in_folder(folder_path, output_folder):
-    """
-    Merges all .mp3 files in the given folder into one file with the same name as the folder.
-    The resulting file is saved in the specified output folder.
-    """
-    try:
-        # Get all .mp3 files in the folder
-        mp3_files = [f for f in os.listdir(folder_path) if f.endswith('.mp3')]
-        if not mp3_files:
-            raise ValueError("No .mp3 files found in the folder.")
-
-        # Sort files numerically based on the first number in the filename
-        def extract_first_number(filename):
-            # Extract all numbers from the filename
-            numbers = re.findall(r'\d+', filename)
-            
-            # Convert all found numbers to integers
-            # If no numbers found, use infinity for sorting
-            if not numbers:
-                return (float('inf'),)
-            
-            # Return tuple of all numbers found for multi-level sorting
-            return tuple(int(num) for num in numbers)
-
-        mp3_files.sort(key=extract_first_number)
-        logging.info(f"Sorted .mp3 files: {mp3_files} in folder {folder_path}")
-        combined_audio = AudioSegment.empty()
-        for mp3_file in mp3_files:
-            file_path = os.path.join(folder_path, mp3_file)
-            audio = AudioSegment.from_file(file_path)
-            combined_audio += audio
-            logging.info(f"Added {mp3_file} to combined audio.")
-        # Save the merged file in the output folder with the folder name
-        output_file = os.path.join(output_folder, f"{os.path.basename(folder_path)}.mp3")
-        combined_audio.export(output_file, format="mp3")
-        print(f"Merged file saved as: {output_file}")
-        logging.info(f"Merged file saved as: {output_file}")
-    except Exception as e:
-        print(f"Error merging .mp3 files: {e}")
-        logging.error(f"Error merging .mp3 files: {traceback.format_exc()}")
 
 def merge_all(base_folder):
     """
