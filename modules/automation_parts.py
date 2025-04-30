@@ -208,7 +208,8 @@ def createUploadComposition(driver:webdriver.Chrome, base_folder:str='inputFiles
     with open('config.json', 'r') as f:
         config = json.load(f)
 
-    uploadTimePerFile = config['uploadTimeoutPerFile']
+    uploadTimePerFile = config['uploadCompletionTimeoutPerFile']
+    upload_wait_time_per_file = config['WaitTimeForUploadToStartPerFile']
     createNewComposition(driver, "Upload")
     time.sleep(2)
     audioFiles = os.listdir(base_folder)
@@ -220,9 +221,9 @@ def createUploadComposition(driver:webdriver.Chrome, base_folder:str='inputFiles
         .send_keys("v")\
         .key_up(Keys.CONTROL)\
         .perform()
-    print("Waiting for upload to start..")
+    print("Waiting {:.2f} mins for upload to start..".format((upload_wait_time_per_file)*len(audioFiles)/60))
     try:
-        WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
+        WebDriverWait(driver, (upload_wait_time_per_file)*len(audioFiles)).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
         print("Upload started!")
     except TimeoutException:
         print("Upload failed or timed out.")
