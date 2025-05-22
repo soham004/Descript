@@ -16,6 +16,8 @@ config = None
 with open('config.json', 'r') as f:
     config = json.load(f)
 
+time_to_wait_before_export_in_mins = config.get("time_to_wait_before_export_in_mins", 5)
+
 
 os.makedirs("downloadedAudio", exist_ok=True)
 os.makedirs("inputFiles", exist_ok=True)
@@ -82,14 +84,18 @@ if __name__ == "__main__":
 
     loginToDescript(driver)
     # input("EEEEE")
-    driver.get(config['defaultProject'])
-    setUpProject(driver)
+    driver.get("https://web.descript.com/projects?filter=recent-projects")
+
+    remove_all_previous_projects(driver)
+
+    change_settings(driver)
+
+    # setUpProject(driver)
     
     audioFiles = os.listdir(input_files_folder)
     audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
-    logging.info(f"Audio files to be uploaded: {audioFiles}")
 
-    createUploadComposition(driver=driver, base_folder=input_files_folder)
+    # createUploadComposition(driver=driver, base_folder=input_files_folder)
 
     time.sleep(2)
 
@@ -97,26 +103,23 @@ if __name__ == "__main__":
 
     for audioFile in audioFiles:
         try:
-            retries = 3
-            success = False
-            while retries > 0:
-                print("")
-                createNewComposition(driver)
-                useAudioFile(driver, audioFile)
-                success = exportComposition(driver, destination="web", audioFilename=audioFile)
-                if not success:
-                    print("Export failed, retrying...")
-                    retries -= 1
-                    continue
-                break
-            if retries == 0:
-                print("Failed to export after 3 attempts, skipping this file.")
+            print("")
+            print(f"Processing {audioFile}...")
+            create_new_project(driver, audioFile)
+            upload_audio_file(driver, os.path.abspath(os.path.join(input_files_folder, audioFile)))
+            createNewComposition(driver)
+            useAudioFile(driver, audioFile)
         except Exception as e:
             print(f"Error processing {audioFile}: {e}")
-            
             logging.error(f"{traceback.format_exc()}")
             
-            continue
+    
+    print(f"Waiting {time_to_wait_before_export_in_mins} minutes before export...")
+    time.sleep(time_to_wait_before_export_in_mins * 60)
+
+    audioFiles = export_all_projects(driver)
+
+    logging.info(f"Exported files: {audioFiles}")
     
     # Download all the files
     with open('downloadLinks.txt', 'r') as f:
@@ -125,6 +128,6 @@ if __name__ == "__main__":
     for i, link in enumerate(links):
         link = link.strip()
         if link:
-            downloadFromDescript(driver, link, audioFiles[i])
+            downloadFromDescript(driver, link, audioFiles[i]+".mp3")
 
     driver.quit()

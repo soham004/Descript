@@ -11,6 +11,7 @@ from selenium.common.exceptions import *
 import pyautogui
 import pygetwindow as gw
 import traceback
+from typing import List
 
 from modules.utils import *
 from modules.notifier import notify
@@ -36,7 +37,7 @@ def waitForLoginToComplete(driver:webdriver.Chrome):
 def click_element(driver:webdriver.Chrome, web_element):
     try:
         logging.debug(f"Clicking element: {web_element.tag_name} {web_element.get_attribute('class')}")
-        driver.execute_script("arguments[0].click();", web_element)
+        ActionChains(driver).move_to_element(web_element).click().perform()
         logging.debug("Click successful")
     except Exception as e:
         logging.error(f"Failed to click element: {str(e)}\n{traceback.format_exc()}")
@@ -85,6 +86,52 @@ def loginToDescript(driver:webdriver.Chrome):
         driver.quit()
         exit()
 
+
+def remove_all_previous_projects(driver:webdriver.Chrome):
+    print("Removing all previous projects...")
+    action_chains = ActionChains(driver)
+    driver.get("https://web.descript.com/projects?filter=recent-projects")
+    try:
+        project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')))
+        while True:
+            try:
+                project = driver.find_element(By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')
+            except NoSuchElementException:
+                break
+            action_chains.move_to_element(project).context_click().perform()
+            time.sleep(0.5)
+            delete_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Delete project")]/parent::div/parent::div')))
+            click_element(driver, delete_button)
+            time.sleep(2)
+            confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="dialog-confirm-button"]')))
+            click_element(driver, confirm_button)
+            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//div[contains(text(),"Project deleted!")]')))
+            time.sleep(2)
+    except TimeoutException:
+        print("No projects found to delete.")
+        logging.info("No projects found to delete.")
+
+
+def change_settings(driver:webdriver.Chrome):
+    account_menu_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Open Account Menu"]')))
+    if account_menu_button.get_attribute("aria-expanded") == "false":
+        click_element(driver, account_menu_button)
+    time.sleep(.5)
+    settings_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div')))
+    click_element(driver, settings_div)
+
+    
+    time.sleep(2)
+    transcribeButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Always ask before transcribing")]/following-sibling::div/button')))
+    if transcribeButton.get_attribute("aria-checked") == "false":
+        # transcribeButton.click()
+        click_element(driver, transcribeButton)
+        time.sleep(1)
+    
+    close_dialog = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close dialog"]')))
+    click_element(driver, close_dialog)
+
+
 def setUpProject(driver:webdriver.Chrome):
     # Wait for the "New Project" button to be present and click it
     with open('config.json', 'r') as f:
@@ -99,8 +146,8 @@ def setUpProject(driver:webdriver.Chrome):
         time.sleep(1)
         # Wait for the "Create a new project" button to be present and click it
 
-        setteings_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div')))
-        click_element(driver, setteings_div)
+        settings_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div')))
+        click_element(driver, settings_div)
 
         
         time.sleep(2)
@@ -120,6 +167,37 @@ def setUpProject(driver:webdriver.Chrome):
         print("Failed to set up project.")
         driver.quit()
         exit()
+
+
+def create_new_project(driver:webdriver.Chrome, project_name:str):
+    driver.get("https://web.descript.com/projects?filter=recent-projects")
+    print("Creating new project with name: " + project_name)
+    new_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="new-project-button"]')))
+    click_element(driver, new_project_button)
+    audio_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Audio project")]/parent::div/parent::div')))
+    click_element(driver, audio_project_button)
+    time.sleep(1)
+    print("Waiting for project to open...")
+    while True:
+        try:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
+            break
+        except TimeoutException:
+            print("Waiting for project to open...")
+            time.sleep(1)
+    print("Project opened successfully!")
+
+    project_popover_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="project-popover-trigger"]')))
+    click_element(driver, project_popover_button)
+    time.sleep(1)
+    rename_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Rename")]/parent::div/parent::div')))
+    click_element(driver, rename_div)
+    time.sleep(1)
+    actionChains = ActionChains(driver)
+    actionChains.send_keys(project_name).perform()
+    actionChains.send_keys(Keys.RETURN).perform()
+    time.sleep(1)
+
 
 def rename_composition(driver:webdriver.Chrome, composition_name:str):
     
@@ -198,6 +276,57 @@ def createNewComposition(driver:webdriver.Chrome, composition_name:str = None):
     print("New composition button clicked")
     if composition_name is not None:
         rename_composition(driver, composition_name)
+
+
+def upload_audio_file(driver:webdriver.Chrome, audioFile:str):
+    # //button[@data-testid="composition-popover-trigger"]
+    #//div[contains(@class,'Spinner-module')]
+    config = None
+    # Load the config file
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+
+    uploadTimePerFile = config['uploadCompletionTimeoutPerFile']
+    upload_wait_time_per_file = config['WaitTimeForUploadToStartPerFile']
+    time.sleep(2)
+    copy_files_to_clipboard([get_absolute_path(audioFile)]) 
+    print("File path copied to clipboard successfully.")
+    ActionChains(driver)\
+        .key_down(Keys.CONTROL)\
+        .send_keys("v")\
+        .key_up(Keys.CONTROL)\
+        .perform()
+    print("Waiting {:.2f} mins for upload to start..".format((upload_wait_time_per_file)/60))
+    try:
+        WebDriverWait(driver, (upload_wait_time_per_file)).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
+        print("Upload started!")
+    except TimeoutException:
+        print("Upload failed or timed out.")
+        driver.quit()
+        exit()
+
+    print("Waiting {:.2f} mins for all activities to complete..".format((uploadTimePerFile)/60))
+
+    start_time = time.time()
+    printOnce = True
+    while (time.time() - start_time) < (uploadTimePerFile):
+        time.sleep(1)
+        # Check if the upload is complete
+        try:
+            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
+            print("Activities in progress...") if printOnce else None
+            printOnce = False
+        except TimeoutException:
+            print("Upload completed!")
+            break
+    
+    if time.time() - start_time >= uploadTimePerFile:
+        print("Upload timed out.")
+        driver.quit()
+        exit()
+    
+    clear_clipboard()
+
 
 def createUploadComposition(driver:webdriver.Chrome, base_folder:str='inputFiles'):
     # //button[@data-testid="composition-popover-trigger"]
@@ -389,17 +518,6 @@ def applyStudioSound(driver:webdriver.Chrome):
             break
         except TimeoutException:
             pass
-    
-    print("waiting for studio sound to apply...")
-    exportOnce = True
-    while True:
-        try:
-            driver.find_element(By.XPATH, '//span[contains(text(),"Loading")]')
-            print("Studio Sound application in progress...") if exportOnce else None
-            exportOnce = False
-        except NoSuchElementException:
-            print("Studio Sound application completed!")
-            break
     time.sleep(.4)
     time.sleep(1)
 
@@ -408,8 +526,49 @@ def useAudioFile(driver:webdriver.Chrome, audioFile:str):
     srearchAndSelectFile(driver, audioFile)
     applyStudioSound(driver)
 
+def export_all_projects(driver:webdriver.Chrome) -> List[str]:
+    driver.get("https://web.descript.com/projects?filter=recent-projects")
+    no_of_projects = len(driver.find_elements(By.XPATH, '//tr[@item="[object Object]"]/td[1]'))
+
+    project_names = []
+
+    for i in range(no_of_projects):
+        try:
+            print()
+            driver.get("https://web.descript.com/projects?filter=recent-projects")
+            time.sleep(1)
+            project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//tr[@item="[object Object]" and @data-index="{i}"]/td[1]')))
+            project_name = project.get_attribute("data-project-name")
+            project_names.append(project_name)
+            click_element(driver, project)
+            time.sleep(1)
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
+            exportComposition(driver, destination="web")
+        except Exception as e:
+            logging.error(f"Error exporting project {i}: {e}")
+            print(f"Error exporting project {i}: {e}")
+    
+    return project_names
+
+
+def goto_last_composition(driver:webdriver.Chrome):
+    print("Going to last composition...")
+    actionChains = ActionChains(driver)
+
+    composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
+    # composition_popup.click()
+    actionChains.move_to_element(composition_popup).click().perform()
+
+    last_composition = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="composition-folder-tree"]/li/div[1]')))[-1]
+    actionChains.move_to_element(last_composition).click().perform()
+    time.sleep(1)
+    actionChains.send_keys(Keys.ESCAPE).perform()
+    actionChains.send_keys(Keys.ESCAPE).perform()
+
 
 def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None) -> bool:
+    goto_last_composition(driver)
+    time.sleep(1)
     logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}")
 
     exportSuccess = True

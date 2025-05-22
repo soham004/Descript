@@ -1,5 +1,7 @@
 downloadedAudio/*.*
-inputFiles/*
+inputFiles/
+_internal/
+main.exe
 *.json
 junk
 *.log
