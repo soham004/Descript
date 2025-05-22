@@ -414,7 +414,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
 
     exportSuccess = True
 
-    exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="publish-popover-trigger"]')))
+    exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
     if exportButton.get_attribute("data-state") == "closed":
         # exportButton.click()
         click_element(driver, exportButton)
@@ -432,11 +432,10 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             # webOption.click()
             click_element(driver, webOption)
             time.sleep(1)
-            final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="publish-button"]')))
+            final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-button"]')))
             # final_exportButton.click()
             click_element(driver, final_exportButton)
 
-    
     if destination == "web":
         # Wait for published text
         webExportComplete = False
