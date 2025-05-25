@@ -540,6 +540,7 @@ def export_all_projects(driver:webdriver.Chrome) -> List[str]:
             project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//tr[@item="[object Object]" and @data-index="{i}"]/td[1]')))
             project_name = project.get_attribute("data-project-name")
             project_names.append(project_name)
+            ActionChains(driver).scroll_to_element(project).perform()
             click_element(driver, project)
             time.sleep(1)
             WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))

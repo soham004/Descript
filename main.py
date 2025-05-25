@@ -50,6 +50,13 @@ options.add_argument('log-level=3')
 
 options.add_experimental_option("detach", True)
 
+def chunk_list(input_list, chunk_size=9):
+
+    result = []
+    for i in range(0, len(input_list), chunk_size):
+        result.append(input_list[i:i + chunk_size])
+    return result
+
 if __name__ == "__main__":
 
     with open('downloadLinks.txt', 'w') as f: # Clear the file content
@@ -85,49 +92,49 @@ if __name__ == "__main__":
     loginToDescript(driver)
     # input("EEEEE")
     driver.get("https://web.descript.com/projects?filter=recent-projects")
-
-    remove_all_previous_projects(driver)
-
     change_settings(driver)
-
-    # setUpProject(driver)
-    
+        
     audioFiles = os.listdir(input_files_folder)
     audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
 
-    # createUploadComposition(driver=driver, base_folder=input_files_folder)
+    chunked_audio_files = chunk_list(audioFiles, 6)
 
-    time.sleep(2)
+    print(f"No of chunks: {len(chunked_audio_files)}")
+    logging.info(f"Chunks: {chunked_audio_files}")
 
-    # Generate all the files
+    for audio_files in chunked_audio_files:
 
-    for audioFile in audioFiles:
-        try:
-            print("")
-            print(f"Processing {audioFile}...")
-            create_new_project(driver, audioFile)
-            upload_audio_file(driver, os.path.abspath(os.path.join(input_files_folder, audioFile)))
-            createNewComposition(driver)
-            useAudioFile(driver, audioFile)
-        except Exception as e:
-            print(f"Error processing {audioFile}: {e}")
-            logging.error(f"{traceback.format_exc()}")
-            
-    
-    print(f"Waiting {time_to_wait_before_export_in_mins} minutes before export...")
-    time.sleep(time_to_wait_before_export_in_mins * 60)
+        remove_all_previous_projects(driver)
 
-    audioFiles = export_all_projects(driver)
+        time.sleep(2)
 
-    logging.info(f"Exported files: {audioFiles}")
-    
-    # Download all the files
-    with open('downloadLinks.txt', 'r') as f:
-        links = f.readlines()
-    
-    for i, link in enumerate(links):
-        link = link.strip()
-        if link:
-            downloadFromDescript(driver, link, audioFiles[i]+".mp3")
+        for audioFile in audio_files:
+            try:
+                print("")
+                print(f"Processing {audioFile}...")
+                create_new_project(driver, audioFile)
+                upload_audio_file(driver, os.path.abspath(os.path.join(input_files_folder, audioFile)))
+                createNewComposition(driver)
+                useAudioFile(driver, audioFile)
+            except Exception as e:
+                print(f"Error processing {audioFile}: {e}")
+                logging.error(f"{traceback.format_exc()}")
+                
+        
+        print(f"Waiting {time_to_wait_before_export_in_mins} minutes before export...")
+        time.sleep(time_to_wait_before_export_in_mins * 60)
+
+        export_files = export_all_projects(driver)
+
+        logging.info(f"Exported files: {export_files}")
+        
+        # Download all the files
+        with open('downloadLinks.txt', 'r') as f:
+            links = f.readlines()
+        
+        for i, link in enumerate(links):
+            link = link.strip()
+            if link:
+                downloadFromDescript(driver, link, export_files[i]+".mp3")
 
     driver.quit()
