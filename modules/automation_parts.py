@@ -583,7 +583,7 @@ def goto_last_composition(driver:webdriver.Chrome):
     actionChains.send_keys(Keys.ESCAPE).perform()
 
 
-def exportComposition(driver:webdriver.Chrome, destination:str = "web", audioFilename:str = None) -> bool:
+def exportComposition(driver:webdriver.Chrome, destination:str = "web", audioFilename = None) -> bool:
     goto_last_composition(driver)
     time.sleep(1)
     logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}")
