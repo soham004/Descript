@@ -20,12 +20,21 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
     downloadTimeoutPerComposition = config["downloadTimeoutPerComposition"]
     print(f"Downloading from {link}...")
     logging.info(f"Downloading from {link}...")
-    driver.get(link)
-    time.sleep(5)
     for _ in range(3):
         try:
+            driver.get(link)
+            time.sleep(5)
             print(f"Waiting {downloadTimeoutPerComposition/60} mins for download button...")
             downloadButton = WebDriverWait(driver, downloadTimeoutPerComposition).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Download"]')))
+            try:
+                extracted_filename = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//input[@type="text"]'))).get_attribute("value")
+                if extracted_filename:
+                    filename = extracted_filename
+                    logging.info(f"Extracted filename: {filename}")
+                    print(f"Extracted filename: {filename}")
+            except TimeoutException:
+                logging.info("Filename input not found, using provided filename.")
+                print(f"Filename extraction failed, using {filename}.")
             downloadButton.click()
             break
         except TimeoutException:
@@ -35,8 +44,7 @@ def downloadFromDescript(driver:webdriver.Chrome, link:str, filename:str):
                 print("Render is still going on waiting...")
             except TimeoutException:
                 logging.info("Download button not found or not clickable.")
-                print("Download button not found or not clickable.")
-                return False
+                print("Download button not found or not clickable retrying...")
         if _ == 2:
             logging.info("Download button not found or not clickable.")
             print("Download button not found or not clickable.")

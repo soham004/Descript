@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import *
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import pyautogui
 import pygetwindow as gw
 import traceback
@@ -91,25 +91,37 @@ def remove_all_previous_projects(driver:webdriver.Chrome):
     print("Removing all previous projects...")
     action_chains = ActionChains(driver)
     driver.get("https://web.descript.com/projects?filter=recent-projects")
-    try:
-        project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')))
+    time.sleep(5)
+    project = None
+    while True:
+        try:
+            project = driver.find_element(By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')
+        except NoSuchElementException:
+            print("No more projects found to delete.")
+            break
         while True:
             try:
-                project = driver.find_element(By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')
-            except NoSuchElementException:
+                # Scroll to the project element
+                action_chains.scroll_to_element(project).perform()
+                time.sleep(0.5)
+                action_chains.move_to_element(project).context_click().perform()
+                time.sleep(0.5)
+                delete_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Delete project")]/parent::div/parent::div')))
+                click_element(driver, delete_button)
+                time.sleep(2)
+                confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="dialog-confirm-button"]')))
+                click_element(driver, confirm_button)
+                WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(),"Project deleted!")]')))
+                time.sleep(2)
                 break
-            action_chains.move_to_element(project).context_click().perform()
-            time.sleep(0.5)
-            delete_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Delete project")]/parent::div/parent::div')))
-            click_element(driver, delete_button)
-            time.sleep(2)
-            confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="dialog-confirm-button"]')))
-            click_element(driver, confirm_button)
-            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//div[contains(text(),"Project deleted!")]')))
-            time.sleep(2)
-    except TimeoutException:
-        print("No projects found to delete.")
-        logging.info("No projects found to delete.")
+            except TimeoutException:
+                print("Project deletion failed, retrying...")
+                logging.info("Project deletion failed, retrying")
+                driver.get("https://web.descript.com/projects?filter=recent-projects")
+                time.sleep(5)
+                project = driver.find_element(By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')
+                time.sleep(1)
+                
 
 
 def change_settings(driver:webdriver.Chrome):
@@ -132,53 +144,42 @@ def change_settings(driver:webdriver.Chrome):
     click_element(driver, close_dialog)
 
 
-def setUpProject(driver:webdriver.Chrome):
-    # Wait for the "New Project" button to be present and click it
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-    maxWaitTimeForOpeningProject = config['maxWaitTimeForOpeningProject']
-    try:
-        print(f"Waiting {maxWaitTimeForOpeningProject/60} mins for project setup...")
-
-        app_menu_button = WebDriverWait(driver, maxWaitTimeForOpeningProject).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Open app menu"]')))
-        app_menu_button.click()
-
-        time.sleep(1)
-        # Wait for the "Create a new project" button to be present and click it
-
-        settings_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div')))
-        click_element(driver, settings_div)
-
-        
-        time.sleep(2)
-        transcribeButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Always ask before transcribing")]/following-sibling::div/button')))
-        if transcribeButton.get_attribute("aria-checked") == "false":
-            # transcribeButton.click()
-            click_element(driver, transcribeButton)
-            time.sleep(1)
-        
-        close_dialog = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close dialog"]')))
-        click_element(driver, close_dialog)
-
-
-        print("Project setup completed!")
-    except TimeoutException:
-        logging.error(traceback.format_exc())
-        print("Failed to set up project.")
-        driver.quit()
-        exit()
-
-
 def create_new_project(driver:webdriver.Chrome, project_name:str):
-    driver.get("https://web.descript.com/projects?filter=recent-projects")
-    print("Creating new project with name: " + project_name)
-    new_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="new-project-button"]')))
-    click_element(driver, new_project_button)
-    audio_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Audio project")]/parent::div/parent::div')))
-    click_element(driver, audio_project_button)
-    time.sleep(1)
-    print("Waiting for project to open...")
     while True:
+        try:
+            driver.get("https://web.descript.com/projects?filter=recent-projects")
+            print("Creating new project with name: " + project_name)
+            new_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="new-project-button"]')))
+            click_element(driver, new_project_button)
+            time.sleep(1)
+            audio_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Audio project")]/parent::div/parent::div')))
+            click_element(driver, audio_project_button)
+            time.sleep(1)
+            print("Waiting for project to open...")
+            break
+        except TimeoutException:
+            print("Failed to create new project, retrying...")
+            time.sleep(1)
+
+    current_time = time.time()
+    while True:
+        if time.time() - current_time > 120:
+            while True:
+                try:
+                    driver.get("https://web.descript.com/projects?filter=recent-projects")
+                    print("Creating new project with name: " + project_name)
+                    new_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="new-project-button"]')))
+                    click_element(driver, new_project_button)
+                    time.sleep(1)
+                    audio_project_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Audio project")]/parent::div/parent::div')))
+                    click_element(driver, audio_project_button)
+                    time.sleep(1)
+                    print("Waiting for project to open...")
+                    break
+                except TimeoutException:
+                    print("Failed to create new project, retrying...")
+                    time.sleep(1)
+            current_time = time.time()
         try:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
             break
@@ -241,7 +242,7 @@ def delete_last_composition(driver:webdriver.Chrome):
     actionChains.send_keys(Keys.ESCAPE).perform()
     print("Last composition deleted!")
 
-def createNewComposition(driver:webdriver.Chrome, composition_name:str = None):
+def createNewComposition(driver:webdriver.Chrome, composition_name = None):
     # //button[@data-testid="composition-popover-trigger"]
     actionChains = ActionChains(driver)
     retry = 3
@@ -528,25 +529,40 @@ def useAudioFile(driver:webdriver.Chrome, audioFile:str):
 
 def export_all_projects(driver:webdriver.Chrome) -> List[str]:
     driver.get("https://web.descript.com/projects?filter=recent-projects")
-    no_of_projects = len(driver.find_elements(By.XPATH, '//tr[@item="[object Object]"]/td[1]'))
-
+    time.sleep(5)
+    no_of_projects = len(WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.XPATH, '//td[@data-testid="project-row-name-cell"]'))))
+    print(f"Number of projects found: {no_of_projects}")
+    with open('downloadLinks.txt', 'w') as f:
+        print("Clearing downloadLinks.txt")
+        pass
     project_names = []
-
+    project_name = None
     for i in range(no_of_projects):
         try:
-            print()
-            driver.get("https://web.descript.com/projects?filter=recent-projects")
-            time.sleep(1)
-            project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//tr[@item="[object Object]" and @data-index="{i}"]/td[1]')))
-            project_name = project.get_attribute("data-project-name")
-            project_names.append(project_name)
-            ActionChains(driver).scroll_to_element(project).perform()
-            click_element(driver, project)
-            time.sleep(1)
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
+            for retry in range(3):
+                try:
+                    print(f"Exporting project {i}...")
+                    driver.get("https://web.descript.com/projects?filter=recent-projects")
+                    time.sleep(1)
+                    project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//tr[@item="[object Object]" and @data-index="{i}"]/td[1]')))
+                    project_name = project.get_attribute("data-project-name")
+                    ActionChains(driver).scroll_to_element(project).perform()
+                    click_element(driver, project)
+                    time.sleep(1)
+                    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
+                    break
+                except TimeoutException:
+                    print(f"Failed to select project {i}, retrying...")
+                    logging.error(f"Timeout while selecting project {i} trial {retry}, retrying...")
+                    logging.error(traceback.format_exc())
+                    time.sleep(1)
+                    if retry == 2:
+                        raise TimeoutException(f"Failed to select project {i} after 3 attempts.")
+
             exportComposition(driver, destination="web")
+            project_names.append(project_name)
         except Exception as e:
-            logging.error(f"Error exporting project {i}: {e}")
+            logging.error(f"Error exporting project {i}: {traceback.format_exc()}")
             print(f"Error exporting project {i}: {e}")
     
     return project_names
@@ -567,7 +583,7 @@ def goto_last_composition(driver:webdriver.Chrome):
     actionChains.send_keys(Keys.ESCAPE).perform()
 
 
-def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioFilename:str = None) -> bool:
+def exportComposition(driver:webdriver.Chrome, destination:str = "web", audioFilename:str = None) -> bool:
     goto_last_composition(driver)
     time.sleep(1)
     logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}")
@@ -586,7 +602,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
 
     if destination == "web":
         try:
-            WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
+            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
         except TimeoutException:
             webOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Web link"]')))
             # webOption.click()
@@ -596,7 +612,6 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
             # final_exportButton.click()
             click_element(driver, final_exportButton)
 
-    if destination == "web":
         # Wait for published text
         webExportComplete = False
         try:
@@ -666,92 +681,6 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "local", audioF
                     logging.error(f"Error copying link: {str(e)}\n{traceback.format_exc()}")
                     time.sleep(1)
 
-    elif destination == "local":
-        logging.info("Starting local export process")
-        try:
-            localOption = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Local export"]'))
-            )
-            logging.debug(f"Local export option found: {localOption.is_displayed()=}")
-            click_element(driver, localOption)
-            logging.info("Clicked local export option")
-            
-            time.sleep(1)
-            # Load config
-            try:
-                with open('config.json', 'r') as f:
-                    config = json.load(f)
-                logging.debug(f"Loaded config: exportFormat={config.get('exportFomat', 'not found')}")
-            except Exception as e:
-                logging.error(f"Error loading config: {str(e)}")
-                config = {"exportFomat": "mp3"}  # Default fallback
-                
-            exportFomat = config.get('exportFomat', 'mp3').lower()
-            
-            if exportFomat not in ["mp3", "wav", "m4a"]:
-                logging.warning(f"Invalid export format '{exportFomat}', defaulting to mp3")
-                print("Invalid export format. Defaulting to mp3.")
-                exportFomat = "mp3"
-                
-            logging.info(f"Selecting format: {exportFomat}")
-            
-            formatDropdown = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Format')]/following-sibling::div/button")))
-            # formatDropdown.click()
-            click_element(driver, formatDropdown)
-
-            time.sleep(.5)
-            
-            mp3Option = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, f'//span[contains(text(),"{exportFomat}")]/parent::div/parent::div')))
-            # wavOption.click()
-            click_element(driver, mp3Option)
-
-            time.sleep(.5)
-
-            final_exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-button"]')))
-            # final_exportButton.click()
-            click_element(driver, final_exportButton)
-
-            file_path = os.path.join(os.getcwd(), "downloadedAudio", f"{audioFilename.split('.')[0]}.{exportFomat}")
-            # pyperclip.copy(file_path)
-            for _ in range(3):
-                time.sleep(10)
-                try:
-                    gw.getWindowsWithTitle("Warning:")[0].activate()
-                    print("Download window brought to front.")
-                except Exception as e:
-                    logging.info(e)
-                    continue
-                break
-            pyautogui.write(file_path, interval=0.05)
-            time.sleep(.5)
-            pyautogui.press('enter')
-        
-        except Exception as e:
-            logging.error(f"Error during local export: {str(e)}")
-            exportSuccess = False
-
-    elif destination == "local":
-        #wait for a .mp3 in the download folder
-        print("Waiting for file to be downloaded...")
-        time.sleep(5)
-        downloadTimeoutPerComposition = config['downloadTimeoutPerComposition']
-        start_time = time.time()
-        exportOnce = True
-        print(f"Waiting for {downloadTimeoutPerComposition/60} mins for file to be downloaded...")
-        while True:
-            try:
-                driver.find_element(By.XPATH, "//div[contains(@class,'Spinner-module')]")
-                print("Local Export in progress...") if exportOnce else None
-                exportOnce = False
-            except NoSuchElementException:
-                print("Local Export completed!")
-                break
-            if time.time() - start_time > downloadTimeoutPerComposition:
-                exportSuccess = False
-                print("File download timed out.")
-                break
-        time.sleep(.4)
-    
     try:
         close_export_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close"]')))
         # close_export_button.click()
