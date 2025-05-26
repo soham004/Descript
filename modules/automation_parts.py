@@ -112,12 +112,17 @@ def remove_all_previous_projects(driver:webdriver.Chrome):
                 WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(),"Project deleted!")]')))
                 time.sleep(2)
                 break
-            except TimeoutException:
+            except Exception:
                 print("Project deletion failed, retrying...")
                 logging.info("Project deletion failed, retrying")
+                logging.error(traceback.format_exc())
                 driver.get("https://web.descript.com/projects?filter=recent-projects")
                 time.sleep(5)
-                project = driver.find_element(By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')
+                try:
+                    project = driver.find_element(By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')
+                except NoSuchElementException:
+                    print("No more projects found to delete.")
+                    break
                 time.sleep(1)
                 
 
@@ -530,7 +535,7 @@ def export_all_projects(driver:webdriver.Chrome) -> List[str]:
                     if retry == 2:
                         raise TimeoutException(f"Failed to select project {i} after 3 attempts.")
 
-            exportComposition(driver, destination="web")
+            export_composition_web(driver, destination="web")
             project_names.append(project_name)
         except Exception as e:
             logging.error(f"Error exporting project {i}: {traceback.format_exc()}")
@@ -554,27 +559,23 @@ def goto_last_composition(driver:webdriver.Chrome):
     actionChains.send_keys(Keys.ESCAPE).perform()
 
 
-def exportComposition(driver:webdriver.Chrome, destination:str = "web", audioFilename = None) -> bool:
+def export_composition_web(driver:webdriver.Chrome, destination:str = "web", audioFilename = None) -> bool:
     goto_last_composition(driver)
     time.sleep(1)
     logging.info(f"Starting exportComposition with destination={destination}, filename={audioFilename}")
 
-    exportSuccess = True
-
-    exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
-    if exportButton.get_attribute("data-state") == "closed":
-        # exportButton.click()
-        click_element(driver, exportButton)
-    
-    destinationDropdown = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-labelledby="published-composition-name"]')))
-    # destinationDropdown.click()
-    click_element(driver, destinationDropdown)
-    time.sleep(1)
-
-    if destination == "web":
+    webExportComplete = False
+    for retry in range(3):
         try:
-            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
-        except TimeoutException:
+            exportButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="export-popover-trigger"]')))
+            if exportButton.get_attribute("data-state") == "closed":
+                click_element(driver, exportButton)
+
+            destinationDropdown = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-labelledby="published-composition-name"]')))
+            # destinationDropdown.click()
+            click_element(driver, destinationDropdown)
+            time.sleep(1)
+
             webOption = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-testid="export-destination-select-option-Web link"]')))
             # webOption.click()
             click_element(driver, webOption)
@@ -583,74 +584,54 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "web", audioFil
             # final_exportButton.click()
             click_element(driver, final_exportButton)
 
-        # Wait for published text
-        webExportComplete = False
-        try:
             logging.info("Waiting for web export to complete (timeout: 200s)")
             print("Waiting {:.2f} mins for web export to complete...".format((200/60)))
-            
-            # Log intermediate state if it takes too long
-            start_wait = time.time()
-            while True:
-                try:
-                    element = driver.find_element(By.XPATH, '//span[contains(text(),"Published")]')
-                    WebDriverWait(driver, 200).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
-                    break
-                except NoSuchElementException:
-                    # Log progress every 20 seconds
-                    if time.time() - start_wait > 20:
-                        logging.info(f"Still waiting for 'Published' text after {time.time() - start_wait:.1f}s...")
-                        start_wait = time.time()
-                        # Try to log what's on screen instead
-                        try:
-                            logging.debug(f"Current page source excerpt: {driver.page_source[:500]}...")
-                        except:
-                            logging.debug("Couldn't capture page source")
-                    time.sleep(5)
-                    if time.time() - start_wait > 200:
-                        raise TimeoutException("Timed out waiting for Published text")
-                        
+
+            WebDriverWait(driver, 200).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Published")]')))
+
             logging.info("Web Export completed successfully")
             print("Web Export completed!")
             webExportComplete = True
+            break
         except TimeoutException as e:
             webExportComplete = False
-            exportSuccess = False
-            logging.error(f"Web export timed out: {str(e)}")
+            logging.error(f"Web export timed out: {traceback.format_exc()}")
             print("Web export failed or timed out.")
         except Exception as e:
             webExportComplete = False
-            exportSuccess = False
             logging.error(f"Unexpected error during web export: {str(e)}\n{traceback.format_exc()}")
             print(f"Web export failed with error: {str(e)}")
-            
-        time.sleep(2)
-        if webExportComplete:
-            copy_attempts = 0
-            copy_successful = False
-            while not copy_successful and copy_attempts < 5:  # Add max retry limit
-                copy_attempts += 1
-                logging.info(f"Attempting to copy published link (attempt {copy_attempts}/5)")
-                try:
-                    copyLinkButton = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]'))
-                    )
-                    logging.debug(f"Copy button found: {copyLinkButton.is_enabled()=}, {copyLinkButton.is_displayed()=}")
-                    
-                    actionChains = ActionChains(driver)
-                    actionChains.move_to_element(copyLinkButton).click().perform()
-                    time.sleep(2)
-                    
-                    # Log clipboard content for debugging
-                    clipboard_content = pyperclip.paste().strip()
-                    logging.debug(f"Clipboard content: '{clipboard_content[:50]}...' (truncated)")
-                    
-                    copy_successful = save_clipboard_link()
-                    logging.info(f"Save clipboard result: {copy_successful}")
-                    clear_clipboard()
-                except Exception as e:
-                    logging.error(f"Error copying link: {str(e)}\n{traceback.format_exc()}")
-                    time.sleep(1)
+        if retry == 2:
+            logging.error("Failed to export composition after 3 attempts.")
+            print("Failed to export composition after 3 attempts.")
+            return False
+        
+    time.sleep(2)
+    if webExportComplete:
+        copy_attempts = 0
+        copy_successful = False
+        while not copy_successful and copy_attempts < 5:  # Add max retry limit
+            copy_attempts += 1
+            logging.info(f"Attempting to copy published link (attempt {copy_attempts}/5)")
+            try:
+                copyLinkButton = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Copy published page link"]'))
+                )
+                
+                actionChains = ActionChains(driver)
+                actionChains.move_to_element(copyLinkButton).click().perform()
+                time.sleep(2)
+                
+                # Log clipboard content for debugging
+                clipboard_content = pyperclip.paste().strip()
+                logging.debug(f"Clipboard content: '{clipboard_content[:50]}...' (truncated)")
+                
+                copy_successful = save_clipboard_link()
+                logging.info(f"Save clipboard result: {copy_successful}")
+                clear_clipboard()
+            except Exception as e:
+                logging.error(f"Error copying link: {str(e)}\n{traceback.format_exc()}")
+                time.sleep(1)
 
     try:
         close_export_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close"]')))
@@ -663,7 +644,7 @@ def exportComposition(driver:webdriver.Chrome, destination:str = "web", audioFil
     actionChains.send_keys(Keys.ESCAPE).perform()
     actionChains.send_keys(Keys.ESCAPE).perform()
     time.sleep(1)
-    logging.info(f"Exiting exportComposition, success={exportSuccess}")
-    return exportSuccess
+    logging.info(f"Exiting exportComposition, success={webExportComplete}")
+    return webExportComplete
 
 
