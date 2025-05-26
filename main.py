@@ -102,7 +102,7 @@ if __name__ == "__main__":
     print(f"No of chunks: {len(chunked_audio_files)}")
     logging.info(f"Chunks: {chunked_audio_files}")
 
-    for audio_files in chunked_audio_files:
+    for j , audio_files in enumerate(chunked_audio_files):
 
         remove_all_previous_projects(driver)
 

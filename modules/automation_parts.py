@@ -1,4 +1,5 @@
 import json
+import sys
 import time
 from selenium import webdriver
 # import undetected_chromedriver as uc
@@ -16,9 +17,6 @@ from typing import List
 from modules.utils import *
 from modules.notifier import notify
 
-import ctypes
-
-ctypes.windll.user32.AllowSetForegroundWindow(-1)
 
 # Allow the current process to set the foreground window
 def waitForLoginToComplete(driver:webdriver.Chrome):
@@ -123,25 +121,35 @@ def remove_all_previous_projects(driver:webdriver.Chrome):
                 time.sleep(1)
                 
 
-
 def change_settings(driver:webdriver.Chrome):
-    account_menu_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Open Account Menu"]')))
-    if account_menu_button.get_attribute("aria-expanded") == "false":
-        click_element(driver, account_menu_button)
-    time.sleep(.5)
-    settings_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div')))
-    click_element(driver, settings_div)
+    for retry in range(3):
+        try:
+            account_menu_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Open Account Menu"]')))
+            if account_menu_button.get_attribute("aria-expanded") == "false":
+                click_element(driver, account_menu_button)
+            time.sleep(.5)
+            settings_div = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Settings")]/parent::div/parent::div')))
+            click_element(driver, settings_div)
 
-    
-    time.sleep(2)
-    transcribeButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Always ask before transcribing")]/following-sibling::div/button')))
-    if transcribeButton.get_attribute("aria-checked") == "false":
-        # transcribeButton.click()
-        click_element(driver, transcribeButton)
-        time.sleep(1)
-    
-    close_dialog = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close dialog"]')))
-    click_element(driver, close_dialog)
+            
+            time.sleep(2)
+            transcribeButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Always ask before transcribing")]/following-sibling::div/button')))
+            if transcribeButton.get_attribute("aria-checked") == "false":
+                # transcribeButton.click()
+                click_element(driver, transcribeButton)
+                time.sleep(1)
+            
+            close_dialog = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@aria-label="Close dialog"]')))
+            click_element(driver, close_dialog)
+            break
+        except TimeoutException:
+            driver.get(driver.current_url)  # Refresh the page if settings dialog fails to load
+            time.sleep(2)
+            if retry == 2:
+                print("Failed to change settings after 3 attempts.")
+                logging.error("Failed to change settings after 3 attempts.")
+                driver.quit()
+                sys.exit(1)
 
 
 def create_new_project(driver:webdriver.Chrome, project_name:str):
@@ -199,22 +207,29 @@ def create_new_project(driver:webdriver.Chrome, project_name:str):
     actionChains.send_keys(Keys.RETURN).perform()
     time.sleep(1)
 
-
 def rename_composition(driver:webdriver.Chrome, composition_name:str):
-    
     actionChains = ActionChains(driver)
+    for retry in range(3):
+        try:
+            composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
+            # composition_popup.click()
+            actionChains.move_to_element(composition_popup).click().perform()
 
-    composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
-    # composition_popup.click()
-    actionChains.move_to_element(composition_popup).click().perform()
+            last_composition = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="composition-folder-tree"]/li/div[1]')))[-1]
+            actionChains.context_click(last_composition).perform()
+            time.sleep(1)
+            rename_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Rename')]/parent::div/parent::div")))
+            actionChains.move_to_element(rename_button).click().perform()
+            break
+        except TimeoutException:
 
-    last_composition = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="composition-folder-tree"]/li/div[1]')))[-1]
-    actionChains.context_click(last_composition).perform()
-    time.sleep(1)
-    rename_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Rename')]/parent::div/parent::div")))
+            print(f"Failed to open composition popup or find last composition, retrying... (attempt {retry + 1})")
+            logging.error(f"Timeout while opening composition popup or finding last composition, retrying... (attempt {retry + 1})")
+            driver.get(driver.current_url)  # Refresh the page if composition popup fails to load
+            time.sleep(5)
+
     # rename_button.click()
-    actionChains.move_to_element(rename_button).click().perform()
-
+    
     time.sleep(1)
 
     actionChains.send_keys(composition_name).perform()
@@ -222,25 +237,6 @@ def rename_composition(driver:webdriver.Chrome, composition_name:str):
     time.sleep(1)
     actionChains.send_keys(Keys.ESCAPE).perform()
 
-def delete_last_composition(driver:webdriver.Chrome):
-    print("Deleting last composition...")
-    actionChains = ActionChains(driver)
-
-    composition_popup = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='composition-popover-trigger']")))
-    # composition_popup.click()
-    actionChains.move_to_element(composition_popup).click().perform()
-
-    last_composition = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="composition-folder-tree"]/li/div[1]')))[-1]
-    actionChains.context_click(last_composition).perform()
-    time.sleep(1)
-    delete_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Delete')]/parent::div/parent::div")))
-    click_element(driver, delete_button)
-
-    time.sleep(1)
-    actionChains.send_keys(Keys.ESCAPE).perform()
-    actionChains.send_keys(Keys.ESCAPE).perform()
-    actionChains.send_keys(Keys.ESCAPE).perform()
-    print("Last composition deleted!")
 
 def createNewComposition(driver:webdriver.Chrome, composition_name = None):
     # //button[@data-testid="composition-popover-trigger"]
@@ -328,59 +324,6 @@ def upload_audio_file(driver:webdriver.Chrome, audioFile:str):
     
     clear_clipboard()
 
-
-def createUploadComposition(driver:webdriver.Chrome, base_folder:str='inputFiles'):
-    # //button[@data-testid="composition-popover-trigger"]
-    #//div[contains(@class,'Spinner-module')]
-    config = None
-    # Load the config file
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-
-    uploadTimePerFile = config['uploadCompletionTimeoutPerFile']
-    upload_wait_time_per_file = config['WaitTimeForUploadToStartPerFile']
-    createNewComposition(driver, "Upload")
-    time.sleep(2)
-    audioFiles = os.listdir(base_folder)
-    audioFiles = [f for f in audioFiles if f.endswith('.mp3')]
-    copy_files_to_clipboard([get_absolute_path(os.path.join(base_folder, f)) for f in audioFiles]) 
-    print("File path copied to clipboard successfully.")
-    ActionChains(driver)\
-        .key_down(Keys.CONTROL)\
-        .send_keys("v")\
-        .key_up(Keys.CONTROL)\
-        .perform()
-    print("Waiting {:.2f} mins for upload to start..".format((upload_wait_time_per_file)*len(audioFiles)/60))
-    try:
-        WebDriverWait(driver, (upload_wait_time_per_file)*len(audioFiles)).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
-        print("Upload started!")
-    except TimeoutException:
-        print("Upload failed or timed out.")
-        driver.quit()
-        exit()
-
-    
-    print("Waiting {:.2f} mins for all activities to complete..".format((uploadTimePerFile * len(audioFiles))/60))
-
-    start_time = time.time()
-    printOnce = True
-    while (time.time() - start_time) < (uploadTimePerFile * len(audioFiles)):
-        time.sleep(1)
-        # Check if the upload is complete
-        try:
-            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'Spinner-module')]")))
-            print("Activities in progress...") if printOnce else None
-            printOnce = False
-        except TimeoutException:
-            print("Upload completed!")
-            break
-    
-    if time.time() - start_time >= uploadTimePerFile * len(audioFiles):
-        print("Upload timed out.")
-        driver.quit()
-        exit()
-    
-    clear_clipboard()
 
 def gotoProjectTab(driver:webdriver.Chrome):
     project_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Project')]/parent::button")))
@@ -477,60 +420,88 @@ def srearchAndSelectFile(driver:webdriver.Chrome, audioFile:str):
     
 
 def applyStudioSound(driver:webdriver.Chrome):
-    config = None
-    # Load the config file
-    with open('config.json', 'r') as f:
-        config = json.load(f)
     
-    studioSoundIntensityPercentage = str(config['studioSoundIntensity'])
-    underlord_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Underlord')]/parent::button")))
-    # underlord_tab.click()
-    click_element(driver, underlord_tab)
-
-    studioSoundButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-action-id="studioSound"]')))
-    # studioSoundButton.click()
-    click_element(driver, studioSoundButton)
-    time.sleep(1)
-    studioSoundEffectsButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-key="studio-sound"]/.//button[@aria-label="Effect settings"]')))
-    # studioSoundEffectsButton.click()
-    click_element(driver, studioSoundEffectsButton)
-    time.sleep(1)
-    # //span[contains(text(),"Intensity")]/parent::div/following-sibling::div/input
-    studioSoundIntensityDiv = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Intensity")]/parent::div/parent::label/parent::div')))
-    studioSoundIntensityDiv.click()
-    time.sleep(1)
-    ActionChains(driver)\
-        .send_keys(studioSoundIntensityPercentage)\
-        .send_keys(Keys.RETURN)\
-        .perform()
-    time.sleep(1)
-    close_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="close-button"]')))
-    close_button.click()
-    logging.info("Studio sound intensity set to " + studioSoundIntensityPercentage + "%")
-    print("Waiting for studio sound application to start..")
-
-    time_to_wait_for_studio_sound_to_start = 240
-    start_time = time.time()
-    
-    while (time.time() - start_time) < time_to_wait_for_studio_sound_to_start:
+    for retry in range(3):
         try:
-            WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Loading")]')))
-            print("studio sound application started!")
+            config = None
+            # Load the config file
+            with open('config.json', 'r') as f:
+                config = json.load(f)
+            studioSoundIntensityPercentage = str(config['studioSoundIntensity'])
+            underlord_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Underlord')]/parent::button")))
+            # underlord_tab.click()
+            click_element(driver, underlord_tab)
+
+            studioSoundButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-action-id="studioSound"]')))
+            # studioSoundButton.click()
+            click_element(driver, studioSoundButton)
+            time.sleep(1)
+            studioSoundEffectsButton = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@data-key="studio-sound"]/.//button[@aria-label="Effect settings"]')))
+            # studioSoundEffectsButton.click()
+            click_element(driver, studioSoundEffectsButton)
+            time.sleep(1)
+            # //span[contains(text(),"Intensity")]/parent::div/following-sibling::div/input
+            studioSoundIntensityDiv = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Intensity")]/parent::div/parent::label/parent::div')))
+            studioSoundIntensityDiv.click()
+            time.sleep(1)
+            ActionChains(driver)\
+                .send_keys(studioSoundIntensityPercentage)\
+                .send_keys(Keys.RETURN)\
+                .perform()
+            time.sleep(1)
+            close_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="close-button"]')))
+            close_button.click()
+            logging.info("Studio sound intensity set to " + studioSoundIntensityPercentage + "%")
+            print("Waiting for studio sound application to start..")
+
+            time_to_wait_for_studio_sound_to_start = 240
+            start_time = time.time()
+            
+            while (time.time() - start_time) < time_to_wait_for_studio_sound_to_start:
+                try:
+                    WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(),"Loading")]')))
+                    print("studio sound application started!")
+                    break
+                except TimeoutException:
+                    pass
+            time.sleep(.4)
+            time.sleep(1)
             break
         except TimeoutException:
-            pass
-    time.sleep(.4)
-    time.sleep(1)
+            print(f"Failed to apply studio sound, retrying... (attempt {retry + 1})")
+            logging.error(f"Timeout while applying studio sound, retrying... (attempt {retry + 1})")
+            logging.error(traceback.format_exc())
+            driver.get(driver.current_url)  # Refresh the page if studio sound application fails to load
+            time.sleep(2)
 
 def useAudioFile(driver:webdriver.Chrome, audioFile:str):
-    gotoProjectTab(driver)
-    srearchAndSelectFile(driver, audioFile)
-    applyStudioSound(driver)
+    for retry in range(3):
+        try:
+            gotoProjectTab(driver)
+            srearchAndSelectFile(driver, audioFile)
+            applyStudioSound(driver)
+            break
+        except TimeoutException:
+            print(f"Failed to use audio file {audioFile}, retrying... (attempt {retry + 1})")
+            logging.error(f"Timeout while using audio file {audioFile}, retrying... (attempt {retry + 1})")
+            logging.error(traceback.format_exc())
+
+
 
 def export_all_projects(driver:webdriver.Chrome) -> List[str]:
-    driver.get("https://web.descript.com/projects?filter=recent-projects")
-    time.sleep(5)
-    no_of_projects = len(WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.XPATH, '//td[@data-testid="project-row-name-cell"]'))))
+    no_of_projects = 0
+    for retry in range(3):
+        try:
+            driver.get("https://web.descript.com/projects?filter=recent-projects")
+            time.sleep(5)
+            no_of_projects = len(WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.XPATH, '//td[@data-testid="project-row-name-cell"]'))))
+            break
+        except TimeoutException:
+            print(f"Failed to get the number of projects, retrying... (attempt {retry + 1})")
+            logging.error(f"Timeout while getting the number of projects, retrying... (attempt {retry + 1})")
+            time.sleep(2)
+            if retry == 2:
+                return []
     print(f"Number of projects found: {no_of_projects}")
     with open('downloadLinks.txt', 'w') as f:
         print("Clearing downloadLinks.txt")
