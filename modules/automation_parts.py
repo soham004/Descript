@@ -126,6 +126,28 @@ def remove_all_previous_projects(driver:webdriver.Chrome):
                 time.sleep(1)
                 
 
+def delete_first_project(driver:webdriver.Chrome):
+    action_chains = ActionChains(driver)
+    driver.get("https://web.descript.com/projects?filter=recent-projects")
+    time.sleep(2)
+    try:
+        project = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//tr[@item="[object Object]" and @data-index="0"]/td[1]')))
+        action_chains.scroll_to_element(project).perform()
+        time.sleep(0.5)
+        action_chains.move_to_element(project).context_click().perform()
+        time.sleep(0.5)
+        delete_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(),"Delete project")]/parent::div/parent::div')))
+        click_element(driver, delete_button)
+        time.sleep(2)
+        confirm_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//button[@data-testid="dialog-confirm-button"]')))
+        click_element(driver, confirm_button)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(),"Project deleted!")]')))
+        print("First project deleted successfully.")
+    except TimeoutException:
+        print("Failed to delete the first project, it might not exist.")
+        logging.error("Timeout while deleting the first project, it might not exist.")
+        logging.error(traceback.format_exc())
+
 def change_settings(driver:webdriver.Chrome):
     for retry in range(3):
         try:
@@ -280,7 +302,7 @@ def createNewComposition(driver:webdriver.Chrome, composition_name = None):
         rename_composition(driver, composition_name)
 
 
-def upload_audio_file(driver:webdriver.Chrome, audioFile:str):
+def upload_audio_file(driver:webdriver.Chrome, audioFile:str) -> bool:
     # //button[@data-testid="composition-popover-trigger"]
     #//div[contains(@class,'Spinner-module')]
     config = None
@@ -304,8 +326,7 @@ def upload_audio_file(driver:webdriver.Chrome, audioFile:str):
         print("Upload started!")
     except TimeoutException:
         print("Upload failed or timed out.")
-        driver.quit()
-        exit()
+        return False
 
     print("Waiting {:.2f} mins for all activities to complete..".format((uploadTimePerFile)/60))
 
@@ -319,16 +340,15 @@ def upload_audio_file(driver:webdriver.Chrome, audioFile:str):
             print("Activities in progress...") if printOnce else None
             printOnce = False
         except TimeoutException:
-            print("Upload completed!")
-            break
+            if time.time() - start_time <= uploadTimePerFile:
+                print("Upload completed!")
+                clear_clipboard()
+                return True
     
-    if time.time() - start_time >= uploadTimePerFile:
-        print("Upload timed out.")
-        driver.quit()
-        exit()
+    print("Upload timed out.")
+    return False
     
-    clear_clipboard()
-
+    
 
 def gotoProjectTab(driver:webdriver.Chrome):
     project_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Project')]/parent::button")))

@@ -113,9 +113,16 @@ if __name__ == "__main__":
                 print("")
                 print(f"Processing {audioFile}...")
                 create_new_project(driver, audioFile)
-                upload_audio_file(driver, os.path.abspath(os.path.join(input_files_folder, audioFile)))
-                createNewComposition(driver)
-                useAudioFile(driver, audioFile)
+                if not upload_audio_file(driver, os.path.abspath(os.path.join(input_files_folder, audioFile))):
+                    print(f"Failed to upload {audioFile} Skipping this file.")
+                    logging.error(f"Failed to upload {audioFile}. Skipping this file.")
+                    print("Deleting this project...")
+                    delete_first_project(driver)
+                    print("Project deleted.")
+                    continue
+                else:
+                    createNewComposition(driver)
+                    useAudioFile(driver, audioFile)
             except Exception as e:
                 print(f"Error processing {audioFile}: {e}")
                 logging.error(f"{traceback.format_exc()}")
